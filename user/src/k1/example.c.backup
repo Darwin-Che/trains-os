@@ -1,0 +1,166 @@
+// #include "common/rpi.h"
+// #include "common/printf.h"
+// #include "kernel/uapi.h"
+
+// void user_msg_child()
+// {
+//   int tid = ke_my_tid();
+//   int parent_tid = ke_my_parent_tid();
+//   printf("Child %d: start\r\n", tid);
+//   const char msg[11] = "THEMESSAGE";
+//   char reply[10];
+//   printf("Child %d: ke_send (msg=%d, reply=%d)\r\n", tid, sizeof(msg), sizeof(reply));
+//   int rplen = ke_send(parent_tid, msg, sizeof(msg), reply, sizeof(reply));
+//   if (rplen > 10)
+//   {
+//     printf("Child %d: get too long reply (%d < %d)", tid, 10, rplen);
+//   }
+//   else
+//   {
+//     printf("Child %d: get short reply %s (%d)\r\n", tid, reply, rplen);
+//   }
+//   printf("Child %d: exit\r\n", tid);
+// }
+
+// void user_msg_child_2()
+// {
+//   int tid = ke_my_tid();
+//   printf("Child %d: start\r\n", tid);
+//   int parent_tid = ke_my_parent_tid();
+//   const char msg[31] = "THEMESSAGETHEMESSAGETHEMESSAGE";
+//   char reply[20];
+//   printf("Child %d: ke_send (msg=%d, reply=%d)\r\n", tid, sizeof(msg), sizeof(reply));
+//   int rplen = ke_send(parent_tid, msg, sizeof(msg), reply, sizeof(reply));
+//   if (rplen > (int)sizeof(reply))
+//   {
+//     printf("Child %d: get too long reply (%d < %d)", tid, sizeof(reply), rplen);
+//   }
+//   else
+//   {
+//     printf("Child %d: get short reply %s (%d)\r\n", tid, reply, rplen);
+//   }
+//   printf("Child %d: exit\r\n", tid);
+// }
+
+// void user_msg_child_3()
+// {
+//   int tid = ke_my_tid();
+//   printf("Child %d: start\r\n", tid);
+//   // int parent_tid = ke_my_parent_tid();
+//   const char msg[31] = "THEMESSAGETHEMESSAGETHEMESSAGE";
+//   char reply[20];
+//   printf("Child %d: ke_send (msg=%d, reply=%d)\r\n", tid, sizeof(msg), sizeof(reply));
+//   int rplen = ke_send(100, msg, sizeof(msg), reply, sizeof(reply));
+//   if (rplen == -1)
+//   {
+//     printf("Child %d: sending to invalid tid (%d)\r\n", tid, rplen);
+//   }
+//   else
+//   {
+//     printf("Child %d: sending to wrong tid somehow, do not print here (%d)\r\n", tid, rplen);
+//   }
+
+//   printf("Child %d: exit\r\n", tid);
+// }
+
+// void user_msg_parent()
+// {
+//   printf("Parent: start\r\n");
+//   int child_tid;
+//   child_tid = ke_create(0, user_msg_child);
+//   printf("Creating task that gives reply overflow, tid: %d\r\n", child_tid);
+//   child_tid = ke_create(2, user_msg_child_2);
+//   printf("Creating task that gives receive overflow to parent, tid: %d\r\n", child_tid);
+//   child_tid = ke_create(3, user_msg_child_3);
+//   printf("Creating child that sends to invalid tid, tid: %d\r\n", child_tid);
+//   printf("Parent: created 3 tasks\r\n");
+
+//   int recvlen;
+//   int rplen;
+//   char recv_msg[20];
+//   for (int i = 0; i < 3; ++i)
+//   {
+//     printf("Parent: calling ke_recv\r\n");
+//     recvlen = ke_recv(&child_tid, recv_msg, sizeof(recv_msg));
+//     if (recvlen > 20)
+//     {
+//       printf("Parent: ke_recv get too long message (%d < %d)\r\n", 20, recvlen);
+//     }
+//     else
+//     {
+//       printf("Parent: received %d (%s)\r\n", child_tid, recv_msg);
+//     }
+//     char reply_msg[17] = "THEREPLYTHEREPLY";
+//     printf("Parent: calling ke_reply\r\n");
+//     rplen = ke_reply(child_tid, reply_msg, sizeof(reply_msg));
+//     printf("Parent: ke_reply returned rplen: %d\r\n", rplen);
+//   }
+
+//   printf("Parent: exit\r\n");
+// }
+
+// void another_user();
+
+// void user_entry_func()
+// {
+//   int cnt = 0;
+//   char msg0[] = "  Fresh User Func ----->>>>>\r\n";
+//   uart_puts(0, 0, msg0, sizeof(msg0) - 1);
+//   uart_getc(0, 0);
+//   while (1)
+//   {
+//     char msg1[] = "    User Count\r\n";
+//     msg1[2] = 'A' + cnt;
+//     uart_puts(0, 0, msg1, sizeof(msg1) - 1);
+//     char c = uart_getc(0, 0);
+//     if (c == 'y')
+//       ke_yield();
+//     if (c == 'q')
+//       ke_exit();
+//     if (c == 'p')
+//     {
+//       uint64_t retval = ke_print(msg1);
+//       char msg2[] = "      Get ke_print retval\r\n";
+//       msg2[4] = '0' + retval;
+//       uart_puts(0, 0, msg2, sizeof(msg2) - 1);
+//       uart_getc(0, 0);
+//     }
+//     if (c == 'c')
+//     {
+//       int retval = ke_create(0, another_user);
+//       char msg2[] = "      Get ke_create retval\r\n";
+//       msg2[4] = '0' + retval;
+//       uart_puts(0, 0, msg2, sizeof(msg2) - 1);
+//       uart_getc(0, 0);
+//     }
+//     cnt = (cnt + 1) % 5;
+//   }
+// }
+
+// void another_user()
+// {
+//   int cnt = 0;
+//   char msg0[] = "  Fresh User Func (2)\r\n";
+//   uart_puts(0, 0, msg0, sizeof(msg0) - 1);
+//   uart_getc(0, 0);
+//   while (1)
+//   {
+//     char msg1[] = "    User Count (2)\r\n";
+//     msg1[2] = 'A' + cnt;
+//     uart_puts(0, 0, msg1, sizeof(msg1) - 1);
+//     char c = uart_getc(0, 0);
+//     if (c == 'y')
+//       ke_yield();
+//     if (c == 'q')
+//       ke_exit();
+//     if (c == 'p')
+//     {
+//       uint64_t retval = ke_print(msg1);
+//       char msg2[] = "      Get ke_print retval (2)\r\n";
+//       msg2[4] = '0' + retval;
+//       uart_puts(0, 0, msg2, sizeof(msg2) - 1);
+//       uart_getc(0, 0);
+//     }
+//     cnt = (cnt + 1) % 5;
+//   }
+// }

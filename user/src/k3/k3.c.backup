@@ -1,0 +1,36 @@
+#include "kernel/uapi.h"
+#include "msg/msg.h"
+
+void k3_main()
+{
+  int my_tid = ke_my_tid();
+  int parent_tid = ke_my_parent_tid();
+
+  MSG_INIT(req, mK3Req);
+  MSGBOX_T(replybox, sizeof(struct mK3Resp));
+
+  MSG_SEND(parent_tid, &req, &replybox);
+
+  MSGBOX_CAST(&replybox, mK3Resp, reply);
+
+  int clock_tid = ke_who_is(NAME_CLOCK_SERVER);
+  assert(clock_tid >= 0);
+
+  char buf[256];
+
+  int retval;
+  for (int i = 1; i <= reply->delay_cnt; i += 1)
+  {
+    retval = ke_delay(clock_tid, reply->delay_ticks);
+    if (retval < 0)
+    {
+      sprintf(buf, "K3 client tid=%2d (interval=%d) : Delay #%2d Retval=%d < 0\r\n",
+              my_tid, reply->delay_ticks, i, retval);
+      ke_print(buf);
+      assert_fail();
+    }
+    sprintf(buf, "K3 client tid=%2d (interval=%d) : Delay #%2d finished ; delay*no=%3d ; Retval=%3d\r\n",
+            my_tid, reply->delay_ticks, i, i * reply->delay_ticks, retval);
+    ke_print(buf);
+  }
+}

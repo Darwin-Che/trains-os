@@ -1,0 +1,7 @@
+#ifndef C_SYS_CONST_H
+#define C_SYS_CONST_H
+
+#define C_MAX_NS_NAME_SIZE 10
+#define C_MAX_NS_RECEIVED_MESSAGE_LEN 20
+
+#endif
