@@ -1,5 +1,5 @@
 #include "util.h"
-#include "common/rpi.h"
+#include "lib/include/rpi.h"
 
 void print_debug(uint64_t reason)
 {

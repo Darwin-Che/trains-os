@@ -1,10 +1,10 @@
 #include "kernel/uapi.h"
-#include "common/utlist.h"
+#include "lib/include/utlist.h"
 #include "rps.h"
 #include "msg/msg.h"
-#include "common/printf.h"
-#include "common/utlist.h"
-#include "common/rpi.h"
+#include "lib/include/printf.h"
+#include "lib/include/utlist.h"
+#include "lib/include/rpi.h"
 
 struct Game
 {

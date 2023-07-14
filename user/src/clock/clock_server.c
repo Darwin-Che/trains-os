@@ -1,11 +1,11 @@
 #include <stdint.h>
 #include "kernel/uapi.h"
 #include "msg/msg.h"
-#include "common/assert.h"
-#include "common/timer.h"
-#include "common/dashboard.h"
-#include "common/heap.h"
-#include "common/utlist.h"
+#include "lib/include/assert.h"
+#include "lib/include/timer.h"
+#include "lib/include/dashboard.h"
+#include "lib/include/heap.h"
+#include "lib/include/utlist.h"
 
 #define CK_SERVER_DELAY_QUEUE_SZ 256
 

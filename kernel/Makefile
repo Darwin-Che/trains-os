@@ -10,6 +10,7 @@ all: ../build/kernel.o
 
 clean:
 	rm -f $(OBJECTS) $(DEPENDS) ../build/kernel.o
+	rm -rf build/
 
 ../build/kernel.o: $(OBJECTS)
 	$(dir_guard) ../build

@@ -10,6 +10,7 @@ all: ../build/user.o
 
 clean:
 	rm -f $(OBJECTS) $(DEPENDS) ../build/user.o
+	rm -rf build/
 
 ../build/user.o: $(OBJECTS)
 	$(dir_guard) ../build

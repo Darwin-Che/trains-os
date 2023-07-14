@@ -1,6 +1,6 @@
 #include "kernel/uapi.h"
-#include "common/rpi.h"
-#include "common/ring_buffer.h"
+#include "lib/include/rpi.h"
+#include "lib/include/ring_buffer.h"
 #include "msg/msg.h"
 #include "uart.h"
 #include "uart_priv.h"

@@ -1,8 +1,8 @@
 #include "kernel/uapi.h"
 #include "msg/msg.h"
 #include "rps.h"
-#include "common/rpi.h"
-#include "common/printf.h"
+#include "lib/include/rpi.h"
+#include "lib/include/printf.h"
 
 void rps_player_main(int moveslen, enum PlayerMove *moves, const char *name)
 {

@@ -1,15 +1,14 @@
 #ifndef M_MSG_H
 #define M_MSG_H
 
-#include "common/assert.h"
-#include "common/printf.h"
-#include "common/sys_const.h"
-#include "common/util.h"
+#include "lib/include/assert.h"
+#include "lib/include/printf.h"
+#include "lib/include/sys_const.h"
+#include "lib/include/util.h"
 #include "user/include/clock.h"
 #include "user/include/ke_print.h"
 
-struct mEmptyMsg
-{
+struct mEmptyMsg {
   char type;
 };
 
@@ -17,92 +16,77 @@ struct mEmptyMsg
 #define M_PUTS_SZ 1010
 
 // only used by ke_print
-struct mDsbDebugReq
-{
+struct mDsbDebugReq {
   char type;
   char msg[M_PUTS_SZ];
 };
 
-struct mDsbDebugResp
-{
+struct mDsbDebugResp {
   char type;
 };
 
 /* Clock */
 
-struct mCkNotifyReq
-{
+struct mCkNotifyReq {
   char type;
 };
 
-struct mCkNotifyResp
-{
+struct mCkNotifyResp {
   char type;
 };
 
-struct mCkTimeReq
-{
+struct mCkTimeReq {
   char type;
 };
 
-struct mCkDelayReq
-{
+struct mCkDelayReq {
   char type;
   int ticks;
 };
 
-struct mCkDelayUntilReq
-{
+struct mCkDelayUntilReq {
   char type;
   int tick;
 };
 
-struct mCkResp
-{
+struct mCkResp {
   char type;
   int tick;
 };
 
-struct mCkDelayTaskReq
-{
+struct mCkDelayTaskReq {
   char type;
 };
 
-struct mCkDelayTaskResp
-{
+struct mCkDelayTaskResp {
   char type;
   int until_tick;
 };
 
 /* NameServer */
 
-struct mNsRegisterReq
-{
+struct mNsRegisterReq {
   char type;
   char name[C_MAX_NS_NAME_SIZE];
 };
 
-struct mNsWhoisReq
-{
+struct mNsWhoisReq {
   char type;
   char name[C_MAX_NS_NAME_SIZE];
 };
 
-struct mNsWhoisResp
-{
+struct mNsWhoisResp {
   char type;
   int tid;
 };
 
 /* K3 clients */
 
-struct mK3Req
-{
+struct mK3Req {
   char type;
 };
 
-struct mK3Resp
-{
+struct mK3Resp {
   char type;
   int delay_ticks;
   int delay_cnt;
@@ -110,78 +94,65 @@ struct mK3Resp
 
 /* Rock Paper Scissors */
 
-struct mRpsRequest
-{
+struct mRpsRequest {
   char type;
   char action;
   char player_choice;
 };
 
-struct mRpsResponse
-{
+struct mRpsResponse {
   char type;
   char result;
 };
 
 /* Uart Server (Internal) */
-struct mUartNotifierReq
-{
+struct mUartNotifierReq {
   char type;
   int intr_id;
 };
 
-struct mUartNotifierResp
-{
+struct mUartNotifierResp {
   char type;
 };
 
-struct mUartTermInputReq
-{
+struct mUartTermInputReq {
   char type;
 };
 
-struct mUartTermOutputReq
-{
+struct mUartTermOutputReq {
   char type;
 };
 
-struct mUartMarklinInputReq
-{
+struct mUartMarklinInputReq {
   char type;
 };
 
-struct mUartMarklinOutputReq
-{
+struct mUartMarklinOutputReq {
   char type;
 };
 
-struct mUartMarklinCtsReq
-{
+struct mUartMarklinCtsReq {
   char type;
 };
 
-struct mUartEmptyResp
-{
+struct mUartEmptyResp {
   char type;
 };
 
 /* Uart Server API */
 
-struct mUartGetcReq
-{
+struct mUartGetcReq {
   char type;
   int channel;
 };
 
-struct mUartGetcResp
-{
+struct mUartGetcResp {
   char type;
   char ch;
   int result;
 };
 
-struct mUartPutsReq
-{
+struct mUartPutsReq {
   char type;
   int channel;
   int str_len;
@@ -189,8 +160,7 @@ struct mUartPutsReq
   char str[M_PUTS_SZ]; // so that sizeof(struct) = 1024
 };
 
-struct mUartPutsResp
-{
+struct mUartPutsResp {
   char type;
   int result;
 };
@@ -199,8 +169,7 @@ struct mUartPutsResp
 
 #define MSG_TYPE_ENUM(MSG_TT) MSG_TT##Enum
 
-enum mMsgTypeEnum
-{
+enum mMsgTypeEnum {
   /* empty */
   MSG_TYPE_ENUM(mEmptyMsg),
   /* Dashboard */
@@ -243,37 +212,26 @@ enum mMsgTypeEnum
 
 #define MSG_TYPE_OF_HELPER(MSG_TT) struct MSG_TT : MSG_TYPE_ENUM(MSG_TT)
 
-#define MSG_TYPE_OF(MSG)                         \
-  _Generic(                                      \
-      (MSG),                                     \
-      MSG_TYPE_OF_HELPER(mCkNotifyReq),          \
-      MSG_TYPE_OF_HELPER(mCkNotifyResp),         \
-      MSG_TYPE_OF_HELPER(mCkTimeReq),            \
-      MSG_TYPE_OF_HELPER(mCkDelayReq),           \
-      MSG_TYPE_OF_HELPER(mCkDelayUntilReq),      \
-      MSG_TYPE_OF_HELPER(mCkResp),               \
-      MSG_TYPE_OF_HELPER(mCkDelayTaskReq),       \
-      MSG_TYPE_OF_HELPER(mCkDelayTaskResp),      \
-      MSG_TYPE_OF_HELPER(mNsRegisterReq),        \
-      MSG_TYPE_OF_HELPER(mNsWhoisReq),           \
-      MSG_TYPE_OF_HELPER(mNsWhoisResp),          \
-      MSG_TYPE_OF_HELPER(mK3Req),                \
-      MSG_TYPE_OF_HELPER(mK3Resp),               \
-      MSG_TYPE_OF_HELPER(mRpsRequest),           \
-      MSG_TYPE_OF_HELPER(mRpsResponse),          \
-      MSG_TYPE_OF_HELPER(mUartNotifierReq),      \
-      MSG_TYPE_OF_HELPER(mUartNotifierResp),     \
-      MSG_TYPE_OF_HELPER(mUartTermInputReq),     \
-      MSG_TYPE_OF_HELPER(mUartTermOutputReq),    \
-      MSG_TYPE_OF_HELPER(mUartMarklinInputReq),  \
-      MSG_TYPE_OF_HELPER(mUartMarklinOutputReq), \
-      MSG_TYPE_OF_HELPER(mUartMarklinCtsReq),    \
-      MSG_TYPE_OF_HELPER(mUartGetcReq),          \
-      MSG_TYPE_OF_HELPER(mUartGetcResp),         \
-      MSG_TYPE_OF_HELPER(mUartPutsReq),          \
-      MSG_TYPE_OF_HELPER(mUartPutsResp),         \
-      MSG_TYPE_OF_HELPER(mUartEmptyResp),        \
-      MSG_TYPE_OF_HELPER(mEmptyMsg))
+#define MSG_TYPE_OF(MSG)                                                       \
+  _Generic(                                                                    \
+      (MSG), MSG_TYPE_OF_HELPER(mCkNotifyReq),                                 \
+      MSG_TYPE_OF_HELPER(mCkNotifyResp), MSG_TYPE_OF_HELPER(mCkTimeReq),       \
+      MSG_TYPE_OF_HELPER(mCkDelayReq), MSG_TYPE_OF_HELPER(mCkDelayUntilReq),   \
+      MSG_TYPE_OF_HELPER(mCkResp), MSG_TYPE_OF_HELPER(mCkDelayTaskReq),        \
+      MSG_TYPE_OF_HELPER(mCkDelayTaskResp),                                    \
+      MSG_TYPE_OF_HELPER(mNsRegisterReq), MSG_TYPE_OF_HELPER(mNsWhoisReq),     \
+      MSG_TYPE_OF_HELPER(mNsWhoisResp), MSG_TYPE_OF_HELPER(mK3Req),            \
+      MSG_TYPE_OF_HELPER(mK3Resp), MSG_TYPE_OF_HELPER(mRpsRequest),            \
+      MSG_TYPE_OF_HELPER(mRpsResponse), MSG_TYPE_OF_HELPER(mUartNotifierReq),  \
+      MSG_TYPE_OF_HELPER(mUartNotifierResp),                                   \
+      MSG_TYPE_OF_HELPER(mUartTermInputReq),                                   \
+      MSG_TYPE_OF_HELPER(mUartTermOutputReq),                                  \
+      MSG_TYPE_OF_HELPER(mUartMarklinInputReq),                                \
+      MSG_TYPE_OF_HELPER(mUartMarklinOutputReq),                               \
+      MSG_TYPE_OF_HELPER(mUartMarklinCtsReq),                                  \
+      MSG_TYPE_OF_HELPER(mUartGetcReq), MSG_TYPE_OF_HELPER(mUartGetcResp),     \
+      MSG_TYPE_OF_HELPER(mUartPutsReq), MSG_TYPE_OF_HELPER(mUartPutsResp),     \
+      MSG_TYPE_OF_HELPER(mUartEmptyResp), MSG_TYPE_OF_HELPER(mEmptyMsg))
 
 /*
 MSG API
@@ -304,31 +262,29 @@ Reply
 
 #define MSG_FILL_TYPE(MSG) (MSG)->type = MSG_TYPE_OF(*MSG)
 
-#define MSG_INIT(MSG, MSG_TT) \
-  struct MSG_TT MSG;          \
+#define MSG_INIT(MSG, MSG_TT)                                                  \
+  struct MSG_TT MSG;                                                           \
   MSG_FILL_TYPE(&MSG)
 
-#define MSGBOX_T(BOX, MSG_MAX_LEN) \
-  struct                           \
-  {                                \
-    int len;                       \
-    int _pad;                      \
-    char msg[MSG_MAX_LEN];         \
+#define MSGBOX_T(BOX, MSG_MAX_LEN)                                             \
+  struct {                                                                     \
+    int len;                                                                   \
+    int _pad;                                                                  \
+    char msg[MSG_MAX_LEN];                                                     \
   } BOX
 
-#define MSGBOX_IS(MB, MSG_TT) \
+#define MSGBOX_IS(MB, MSG_TT)                                                  \
   (((struct mEmptyMsg *)((MB)->msg))->type == MSG_TYPE_ENUM(MSG_TT))
 
-#define MSGBOX_CAST(MB, MSG_TT, MSG)                                          \
-  U_ASSERT_MSG(MSGBOX_IS(MB, MSG_TT) && ((MB)->len == sizeof(struct MSG_TT)), \
-               "MSGBOX_CAST TYPE len=%d type=%d\r\n", (MB)->len,              \
-               ((struct mEmptyMsg *)((MB)->msg))->type);                      \
-  struct MSG_TT *MSG = (struct MSG_TT *)((MB)->msg);                          \
+#define MSGBOX_CAST(MB, MSG_TT, MSG)                                           \
+  U_ASSERT_MSG(MSGBOX_IS(MB, MSG_TT) && ((MB)->len == sizeof(struct MSG_TT)),  \
+               "MSGBOX_CAST TYPE len=%d type=%d\r\n", (MB)->len,               \
+               ((struct mEmptyMsg *)((MB)->msg))->type);                       \
+  struct MSG_TT *MSG = (struct MSG_TT *)((MB)->msg);                           \
   (void)MSG
 
 #define MSG_SEND(TID, MSG, REPLYBOX)                                           \
-  do                                                                           \
-  {                                                                            \
+  do {                                                                         \
     (REPLYBOX)->len = ke_send(TID, (char *)MSG, sizeof(*MSG), (REPLYBOX)->msg, \
                               sizeof((REPLYBOX)->msg));                        \
     U_ASSERT_MSG((REPLYBOX)->len <= (int)sizeof((REPLYBOX)->msg),              \
@@ -336,18 +292,16 @@ Reply
   } while (0)
 
 #define MSG_RECV(TID_PTR, RECVBOX)                                             \
-  do                                                                           \
-  {                                                                            \
+  do {                                                                         \
     (RECVBOX)->len = ke_recv(TID_PTR, (RECVBOX)->msg, sizeof((RECVBOX)->msg)); \
     U_ASSERT_MSG((RECVBOX)->len <= (int)sizeof((RECVBOX)->msg),                \
                  "MSG_RECV LEN\r\n");                                          \
   } while (0)
 
-#define MSG_REPLY(TID, MSG)                                      \
-  do                                                             \
-  {                                                              \
-    int len = ke_reply(TID, (char *)MSG, sizeof(*MSG));          \
-    U_ASSERT_MSG(len <= (int)sizeof(*MSG), "MSG_REPLY LEN\r\n"); \
+#define MSG_REPLY(TID, MSG)                                                    \
+  do {                                                                         \
+    int len = ke_reply(TID, (char *)MSG, sizeof(*MSG));                        \
+    U_ASSERT_MSG(len <= (int)sizeof(*MSG), "MSG_REPLY LEN\r\n");               \
   } while (0)
 
 #endif

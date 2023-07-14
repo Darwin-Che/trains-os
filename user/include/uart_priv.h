@@ -1,50 +1,43 @@
 #ifndef U_UART_PRIV_H
 #define U_UART_PRIV_H
 
-#include "common/ring_buffer.h"
-#include "common/rpi.h"
 #include "kernel/uapi.h"
+#include "lib/include/ring_buffer.h"
+#include "lib/include/rpi.h"
 #include "msg/msg.h"
 
 #define INPUT_QUEUE_CAP 64
 #define INPUT_BUF_CAP 256
 
-struct InputWaitElem
-{
+struct InputWaitElem {
   int tid;
 };
 
 typedef RB_TYPE(char, INPUT_BUF_CAP) InputBufType;
 typedef RB_TYPE(struct InputWaitElem, INPUT_QUEUE_CAP) InputWaitQueueType;
 
-static inline void uart_drain_input(enum UartChnlId chnl)
-{
+static inline void uart_drain_input(enum UartChnlId chnl) {
   while (ke_uart_read_reg(chnl, UART_RXLVL) != 0)
     ke_uart_read_reg(chnl, UART_RHR);
 }
 
-static inline void uart_flush_input(
-    InputBufType *input_buf,
-    InputWaitQueueType *input_wqueue,
-    enum UartChnlId chnl,
-    int input_notifier_tid)
-{
+static inline void uart_flush_input(InputBufType *input_buf,
+                                    InputWaitQueueType *input_wqueue,
+                                    enum UartChnlId chnl,
+                                    int input_notifier_tid) {
   char *cptr;
   struct InputWaitElem *elem;
 
-  while (1)
-  {
+  while (1) {
     // Get all of the FIFO buffer
-    while (ke_uart_read_reg(chnl, UART_RXLVL) != 0)
-    {
+    while (ke_uart_read_reg(chnl, UART_RXLVL) != 0) {
       RB_PUSH_PRE(input_buf, cptr);
       if (cptr == NULL)
         break;
       *cptr = ke_uart_read_reg(chnl, UART_RHR);
     }
 
-    while (1)
-    {
+    while (1) {
       // Reply to some getc request
       RB_PEEK(input_wqueue, elem);
       // If there are no getc request left

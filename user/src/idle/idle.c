@@ -1,8 +1,8 @@
 #include <stdint.h>
-#include "common/timer.h"
+#include "lib/include/timer.h"
 #include "kernel/uapi.h"
-#include "common/dashboard.h"
-#include "common/printf.h"
+#include "lib/include/dashboard.h"
+#include "lib/include/printf.h"
 
 void idle_task()
 {

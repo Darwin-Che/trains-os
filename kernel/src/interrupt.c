@@ -1,15 +1,15 @@
 #include <stdint.h>
-#include "common/printf.h"
-#include "common/assert.h"
-#include "common/timer.h"
+#include "lib/include/printf.h"
+#include "lib/include/assert.h"
+#include "lib/include/timer.h"
 #include "task.h"
 #include "scheduler.h"
 #include "global_state.h"
-#include "common/utlist.h"
+#include "lib/include/utlist.h"
 #include "debug_print.h"
 #include "interrupt.h"
 #include "assert.h"
-#include "common/rpi.h"
+#include "lib/include/rpi.h"
 
 // explicitly setting GICD typer with values might lead to faster execution
 struct PiGicD

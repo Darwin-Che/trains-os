@@ -1,9 +1,9 @@
-#include "common/hashtable.h"
-#include "common/util.h"
+#include "hashfunc.h"
+#include "lib/include/util.h"
 #include "msg/msg.h"
 #include "kernel/uapi.h"
-#include "common/assert.h"
-#include "hashfunc.h"
+#include "lib/include/assert.h"
+#include "lib/include/hashtable.h"
 
 /* Nameserver Hashtable Logic */
 

@@ -1,4 +1,4 @@
-#include "common/rpi.h"
+#include "lib/include/rpi.h"
 #include "kernel/uapi.h"
 #include "msg/msg.h"
 #include "uart.h"

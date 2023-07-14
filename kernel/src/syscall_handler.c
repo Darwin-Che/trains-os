@@ -4,13 +4,13 @@
 #include "util.h"
 #include "scheduler.h"
 #include "mailbox.h"
-#include "common/rpi.h"
+#include "lib/include/rpi.h"
 #include "debug_print.h"
 #include "kernel/uapi.h"
-#include "common/timer.h"
-#include "common/util.h"
+#include "lib/include/timer.h"
+#include "lib/include/util.h"
 #include "interrupt.h"
-#include "common/dashboard.h"
+#include "lib/include/dashboard.h"
 
 void k_create_handler(int priority, void (*func)())
 {

@@ -2,7 +2,7 @@
 #define K_TASK_H
 
 #include "hashtable.h"
-#include "common/utlist.h"
+#include "lib/include/utlist.h"
 #include "mailbox.h"
 #include "stack.h"
 #include "kernel/uapi.h"

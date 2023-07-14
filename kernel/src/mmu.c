@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "common/printf.h"
+#include "lib/include/printf.h"
 #include "mmu.h"
 
 extern uint64_t id_pgd_addr();

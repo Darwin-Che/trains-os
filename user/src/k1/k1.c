@@ -1,5 +1,5 @@
-#include "common/rpi.h"
-#include "common/printf.h"
+#include "lib/include/rpi.h"
+#include "lib/include/printf.h"
 #include "kernel/uapi.h"
 
 void secondary_user_task();

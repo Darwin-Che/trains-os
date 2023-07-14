@@ -1,11 +1,11 @@
 #include "task.h"
-#include "common/rpi.h"
+#include "lib/include/rpi.h"
 #include "util.h"
-#include "common/util.h"
+#include "lib/include/util.h"
 #include "global_state.h"
 #include "debug_print.h"
 #include "kernel/uapi.h"
-#include "common/hashtable.h"
+#include "lib/include/hashtable.h"
 
 void k_tmgr_init(struct kTaskDspMgr *mgr)
 {

@@ -1,7 +1,7 @@
 #include "k2.h"
 #include "kernel/uapi.h"
-#include "common/printf.h"
-#include "common/timer.h"
+#include "lib/include/printf.h"
+#include "lib/include/timer.h"
 
 #define FIX_CHAR 0x5A
 #define WRONG_CHAR 0x68

@@ -4,7 +4,7 @@ include common.mk
 
 LDFLAGS:=-Wl,-nmagic -Wl,-Tlinker.ld
 
-SUBDIRS := kernel user common
+SUBDIRS := kernel user lib
 OBJECTS := $(patsubst %, build/%.o, $(SUBDIRS))
 
 all: kernel8.img
@@ -12,8 +12,9 @@ all: kernel8.img
 clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user clean
-	$(MAKE) -C common clean
+	$(MAKE) -C lib clean
 	rm -f $(OBJECTS) kernel8.img kernel8.elf
+	rm -rf build/
 
 kernel8.img: kernel8.elf
 	$(OBJCOPY) $< -O binary $@
