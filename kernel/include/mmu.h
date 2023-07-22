@@ -64,4 +64,7 @@
 #define TD_DEVICE_BLOCK_FLAGS (TD_ACCESS | TD_INNER_SHARABLE | TD_DATA_PERMS | (MATTR_DEVICE_nGnRnE_INDEX << 2) | TD_BLOCK | TD_VALID)
 #define TD_CODE_BLOCK_FLAGS (TD_ACCESS | TD_INNER_SHARABLE | TD_CODE_PERMS | (MATTR_ALL_CACHE_INDEX << 2) | TD_BLOCK | TD_VALID)
 
+// void create_page_tables();
+// void set_page_tables();
+
 #endif

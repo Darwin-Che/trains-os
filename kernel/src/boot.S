@@ -69,31 +69,21 @@ _start:
     ldr x3, =SPSR_VALUE
     msr spsr_el2, x3
 
-    /* MMU Config */
     ldr x0, =CPACR_EL1_VAL
     msr cpacr_el1, x0
 
+    /* MMU Config */
     ldr x0, =TCR_EL1_VAL
     msr tcr_el1, x0
 
     ldr x0, =MAIR_VALUE
     msr mair_el1, x0
+    /* MMU Config */
 
     adr x4, el1_entry
     msr elr_el2, x4
-    /* MMU Config */
 
     eret // -> el1_entry
-
-.macro configure_mmu
-adrp x0, pg_dir
-msr ttbr1_el1, x0
-
-ldr x0, =(TCR_VALUE)
-msr tcr_el1, x0
-ldr x0, =(MAIR_VALUE)
-msr mair_el1, x0
-.endm
 
 el1_entry:
     // configure processor and mmu
@@ -108,14 +98,16 @@ el1_entry:
 
     // initialize SP
     msr SPSel, #1
-    ldr x0, =KERNEL_STACKEND
+    ldr x0, =LINKER_CODE_START
     mov sp, x0
 
-    /* MMU Config */
-    bl create_page_tables
-    adrp x0, id_pgd
-    msr ttbr0_el1, x0
-    /* MMU Config */
+    // Perform bootstrapping
+    bl k_bootstrap
+
+    // initialize SP
+    msr SPSel, #1
+    ldr x0, =KERNEL_STACKEND
+    mov sp, x0
 
     // Jump to our main() routine in C (make sure it doesn't return)
     bl k_main

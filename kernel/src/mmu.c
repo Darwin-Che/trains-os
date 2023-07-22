@@ -73,6 +73,13 @@ void create_page_tables()
   }
 }
 
+void set_page_tables()
+{
+  uint64_t *pg_ptr = (uint64_t *)id_pgd_addr();
+  asm volatile("msr ttbr0_el1, %0"
+               : "=r"(pg_ptr));
+}
+
 /***********/
 
 void k_page_table_entry_print(uint64_t entry)
@@ -124,9 +131,11 @@ void k_page_table_print(uint64_t *table)
 void k_page_table_print_all()
 {
   uint64_t tcr, mair;
-  asm volatile ("mrs %0, tcr_el1" : "=r" (tcr));
+  asm volatile("mrs %0, tcr_el1"
+               : "=r"(tcr));
   printf("TCR_EL1 = %X\r\n", tcr);
-  asm volatile ("mrs %0, mair_el1" : "=r" (mair));
+  asm volatile("mrs %0, mair_el1"
+               : "=r"(mair));
   printf("MAIR_EL1 = %X\r\n", mair);
 
   // pg_dir = 0x9a000;

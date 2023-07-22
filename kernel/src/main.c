@@ -8,6 +8,8 @@
 #include "interrupt.h"
 #include "mmu.h"
 #include "debug_print.h"
+#include "pgmgr.h"
+#include "sys_val.h"
 
 extern void exception_vector_setup();
 extern void k_page_table_print_all();
@@ -29,7 +31,7 @@ int k_main()
   uart_getc(0, 0);
 #endif
 
-  printf("This is trains-os (" __TIME__ ")\n");
+  printf("This is trains-os (" __TIME__ ")\r\n");
   uart_getc(0, 0);
 
   printf("Enable MMU? y/n\r\n");
@@ -43,6 +45,8 @@ int k_main()
   {
     printf("MMU SKIPPED\r\n");
   }
+
+  // pgmgr_debug_print(SYSADDR.pgmgr, false);
 
   DEBUG_PRINT("Kernel Start\r\n");
 
