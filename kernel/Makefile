@@ -17,11 +17,12 @@ clean:
 	$(CC) $(CFLAGS) $(filter-out %.ld, $^) -o $@ $(LDFLAGS)
 
 build/%.o: src/%.c Makefile
-	$(dir_guard)
+	$(dir_guard) $(dir $@) $(call dump_dir,$@)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+	@$(OBJDUMP) -d $@ > $(call dump_file,$@)
 
 build/%.o: src/%.S Makefile include/context_macro.S
-	$(dir_guard)
+	$(dir_guard) $(dir $@) $(call dump_dir,$@)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 -include $(DEPENDS)

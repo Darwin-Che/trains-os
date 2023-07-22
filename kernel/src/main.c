@@ -29,6 +29,9 @@ int k_main()
   uart_getc(0, 0);
 #endif
 
+  printf("This is trains-os (" __TIME__ ")\n");
+  uart_getc(0, 0);
+
   printf("Enable MMU? y/n\r\n");
   char c = uart_getc(0, 0);
   if (c == 'y')
