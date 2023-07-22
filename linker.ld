@@ -4,6 +4,7 @@ SECTIONS {
   /* Page Tabl */
   /* Arbitrary, aligned with 4KB (0x1000) */
   . = 0x40000; /* 2^18 */
+  PROVIDE(LINKER_CODE_START = .);
   id_pgd = .;
 	.pd_pgd : { . += (6 * (1 << 12)); }
 
@@ -25,4 +26,6 @@ SECTIONS {
     build/user.o (.*)
     build/lib.o (.*)
   }
+
+  PROVIDE(LINKER_CODE_END = .);
 }
