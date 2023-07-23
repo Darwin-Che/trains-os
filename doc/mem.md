@@ -2,9 +2,7 @@
 
 ## TODO
 
-- Write the bootstrap scripts
-- Use a different strategy for constants
-- Apply the page manager for large allocations in the kernel
+- How large a stack for the first user task?
 
 ## Boot
 

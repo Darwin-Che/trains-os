@@ -1,6 +1,7 @@
 #include "bootstrap.h"
 #include "sys_val.h"
 #include "pgmgr_init.h"
+#include "pgmgr.h"
 
 extern void create_page_tables();
 extern void set_page_tables();
@@ -9,7 +10,7 @@ extern char LINKER_CODE_START[];
 extern char LINKER_CODE_END[];
 
 static const uintptr_t FREE_START = 0x40000000;
-static const uintptr_t FREE_END = 0x80000000;
+static const uintptr_t FREE_END = 0x7E000000;
 
 static struct PgInitSeg segs[] = {
     {
@@ -24,7 +25,7 @@ static struct PgInitSeg segs[] = {
     },
 };
 
-void k_bootstrap()
+void *k_bootstrap()
 {
   /* Set up MMU */
   create_page_tables();
@@ -39,4 +40,6 @@ void k_bootstrap()
 
   struct PgMgr *pgmgr = pg_init(&segx);
   SYSADDR.pgmgr = pgmgr;
+
+  return pg_alloc_page(pgmgr, KERNEL_STACK_SFT, 0);
 }

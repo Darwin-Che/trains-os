@@ -1,4 +1,3 @@
-#include "stack.h"
 #include "task.h"
 #include "global_state.h"
 #include "loop.h"
@@ -46,17 +45,27 @@ int k_main()
     printf("MMU SKIPPED\r\n");
   }
 
-  // pgmgr_debug_print(SYSADDR.pgmgr, false);
+  pgmgr_debug_print(SYSADDR.pgmgr, false);
 
-  DEBUG_PRINT("Kernel Start\r\n");
+  printf("Kernel Start\r\n");
 
   // setup idle_td
-  struct kTaskDsp *idle_td = k_tmgr_get_free_task(&gs.task_mgr);
+  struct kTaskDsp *idle_td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT);
+  if (idle_td == NULL)
+  {
+    printf("Failed to create idle_td\r\n");
+    return 0;
+  }
   k_td_init_user_task(idle_td, NULL, K_SCHED_PRIO_MIN, idle_task);
   gs.task_mgr.idle_task = idle_td;
 
   // Our first task
-  struct kTaskDsp *td = k_tmgr_get_free_task(&gs.task_mgr);    // only tid is written
+  struct kTaskDsp *td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT); // only tid is written
+  if (td == NULL)
+  {
+    printf("Failed to create user_entry_td\r\n");
+    return 0;
+  }
   k_td_init_user_task(td, NULL, K_SCHED_PRIO_MAX, user_entry); // init other fields
   k_sched_add_ready(&gs.scheduler, td);
 

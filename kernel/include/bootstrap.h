@@ -1,3 +1,3 @@
 #include "sys_const.h"
 
-void k_bootstrap();
+void *k_bootstrap();
