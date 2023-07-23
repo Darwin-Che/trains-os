@@ -572,7 +572,11 @@ void *pg_alloc_page(struct PgMgr *mgr, uint8_t p, uint16_t flags)
   // p = 13 -> p = 1
   // p = 16 -> p = 4
   // starting from level p (increment), find the first level with non-empty free_list
-  p = MAX(0, p - PG_SFT);
+  if (p < PG_SFT)
+    p = 0;
+  else
+    p -= PG_SFT;
+
   uint8_t q = p;
   for (; q <= PGMGR_MAXLVL; q++)
   {

@@ -11,12 +11,13 @@
 #include "lib/include/util.h"
 #include "interrupt.h"
 #include "lib/include/dashboard.h"
+#include "pgmgr.h"
 
 void k_create_handler(int priority, void (*func)())
 {
   DEBUG_PRINT("\r\n");
   struct kTaskDsp *parent_td = kg_current_td;
-  struct kTaskDsp *td = k_tmgr_get_free_task(&kg_gs->task_mgr);
+  struct kTaskDsp *td = k_tmgr_get_free_task(&kg_gs->task_mgr, PG_SFT);
   if (td == NULL)
   {
     kg_current_td->syscall_retval = -2;

@@ -3,7 +3,6 @@
 #include "lib/include/rpi.h"
 #include "kernel/uapi.h"
 #include "task.h"
-#include "stack.h"
 #include "lib/include/util.h"
 #include "util.h"
 #include "user/user_entry.h"

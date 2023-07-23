@@ -6,7 +6,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define ALIGN_UP(val, sft)                                                     \
+#define ALIGN_UP(val, sft) \
   (((val) + (1 << (sft)) - 1) & ~((typeof((val)))(1 << (sft)) - 1))
 #define ALIGN_DOWN(val, sft) ((val) & ~((1 << sft) - 1))
 
@@ -65,12 +65,13 @@ Why not link all of the page descriptors like this?
 // 64 bytes / 4KB = 1/64
 // So about 4% of total memory will be used by the pgmgr to provide dynamic page
 // allocation.
-struct PgDsp {
+struct PgDsp
+{
   uintptr_t addr;               // the start addr of the page
   struct PgDsp *free_list_next; // used when it is entirely free
   struct PgDsp *free_list_prev; // used when it is entirely free
   uint16_t flags;               //
-  uint8_t lvl; // record how large is the allocation, needed by free_page
+  uint8_t lvl;                  // record how large is the allocation, needed by free_page
   uint8_t _;
 };
 
@@ -89,30 +90,35 @@ Lvl2 buddy 0b10010
 Lvl3 buddy 0b10100 <- outside the root segment
 */
 
-struct PgRoot {
+struct PgRoot
+{
   struct PgDsp *root; // first PgDsp in this segment
   uintptr_t start_addr;
   uintptr_t end_addr;
 };
 
-struct PgDList {
+struct PgDList
+{
   struct PgDsp *head;
 };
 
 /*
 PG_SZ should be between [ 512 Byte, 2 MB ]
 */
-// 2MB = 2^9 * 4KB
-#define PG_SFT 12
-#define PG_SZ (1 << PG_SFT) // 4KB
+// 512 Bytes = 2^9
+// 4KB = 2^12
+// 2MB = 2^9 * 4KB = 2^21
+#define PG_SFT 20 // 1MB
+#define PG_SZ (1 << PG_SFT)
 #define PGMGR_MAXLVL 9
 
-struct PgMgr {
+struct PgMgr
+{
   // premature optimization is the root of all evil
   // Support contiguous page upto 2MB
   struct PgDList free_lists[PGMGR_MAXLVL + 1];
-  unsigned roots_n; // How large can it be? Each root is 2MB. For 8GB, there are
-                    // 4000 entries. Not a lot!
+  unsigned roots_n;      // How large can it be? Each root is 2MB. For 8GB, there are
+                         // 4000 entries. Not a lot!
   struct PgRoot roots[]; // binary search for free_page
 };
 
@@ -126,7 +132,8 @@ void pg_free_page(struct PgMgr *mgr, void *addr);
 
 void pgmgr_debug_print(const struct PgMgr *mgr, bool verbose);
 
-struct PgMgrDebug {
+struct PgMgrDebug
+{
   struct PgMgr *mgr;
   uint32_t
       roots_n; // passed in as what are the capacity in the roots stat arrays

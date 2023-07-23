@@ -6,6 +6,8 @@
 #include "debug_print.h"
 #include "kernel/uapi.h"
 #include "lib/include/hashtable.h"
+#include "pgmgr.h"
+#include "sys_val.h"
 
 void k_tmgr_init(struct kTaskDspMgr *mgr)
 {
@@ -13,7 +15,6 @@ void k_tmgr_init(struct kTaskDspMgr *mgr)
   // 0 -> 1 -> ... -> n-1
   for (int i = USER_STACK_ARRAY_CNT - 1; i >= 0; i -= 1)
   {
-    mgr->task_arr[i].stack_id = i;
     mgr->task_arr[i].tid = K_TID_INVALID;
     LL_PREPEND2(mgr->free_list_head, &mgr->task_arr[i], next_free);
   }
@@ -23,8 +24,15 @@ void k_tmgr_init(struct kTaskDspMgr *mgr)
   mgr->next_tid = 0;
 }
 
-struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr)
+struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr, uint8_t sz)
 {
+  void *stack_addr = pg_alloc_page(SYSADDR.pgmgr, sz, 0); // 16MB = 2^4 MB = 2^24 Bytes
+  if (stack_addr == NULL)
+  {
+    DEBUG_PRINT("No Free Space for the stack!\r\n");
+    return NULL;
+  }
+
   struct kTaskDsp *free_task = mgr->free_list_head;
   if (free_task == NULL)
   {
@@ -33,6 +41,8 @@ struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr)
   }
   LL_DELETE2(mgr->free_list_head, free_task, next_free);
 
+  free_task->stack_addr = (uintptr_t)stack_addr;
+  free_task->stack_sz = 1 << sz;
   free_task->tid = mgr->next_tid;
   mgr->next_tid += 1;
 
@@ -46,6 +56,8 @@ void k_tmgr_destroy_task(struct kTaskDspMgr *mgr, struct kTaskDsp *td)
 {
   // Remove from hash table tid->td
   HT_DEL_BY_KEY(&mgr->map_tid_to_td, &td->tid);
+
+  pg_free_page(SYSADDR.pgmgr, (void *)td->stack_addr);
 
   // change any flags for td
   LL_PREPEND2(mgr->free_list_head, td, next_free);
@@ -67,7 +79,7 @@ void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td, uint64
   td->pstate = 0;
   td->priority_key.priority = priority;
 
-  td->sp = (uint64_t)k_stack_get_stackend(td->stack_id);
+  td->sp = td->stack_addr + (uintptr_t)td->stack_sz;
 
   // simulate the reg_store when the user traps into the kernel
   struct kRegStore *user_reg_store = (struct kRegStore *)(td->sp - sizeof(struct kRegStore));

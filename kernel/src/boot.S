@@ -102,11 +102,11 @@ el1_entry:
     mov sp, x0
 
     // Perform bootstrapping
+    // x0 will be the return value: kernel stack
     bl k_bootstrap
 
     // initialize SP
     msr SPSel, #1
-    ldr x0, =KERNEL_STACKEND
     mov sp, x0
 
     // Jump to our main() routine in C (make sure it doesn't return)
