@@ -17,6 +17,9 @@ clean:
 	rm -rf build/
 	rm -rf dump/
 
+size:
+	$(OBJSIZE) kernel8.elf
+
 kernel8.img: kernel8.elf
 	$(OBJCOPY) $< -O binary $@
 

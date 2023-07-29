@@ -4,6 +4,7 @@ ARCH=cortex-a72
 TRIPLE=aarch64-none-elf
 XBINDIR:=$(XDIR)/bin
 CC:=$(XBINDIR)/$(TRIPLE)-gcc
+OBJSIZE:=$(XBINDIR)/$(TRIPLE)-size
 OBJCOPY:=$(XBINDIR)/$(TRIPLE)-objcopy
 OBJDUMP:=$(XBINDIR)/$(TRIPLE)-objdump
 
