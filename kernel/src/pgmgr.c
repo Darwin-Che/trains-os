@@ -673,7 +673,7 @@ void pgmgr_debug_print(const struct PgMgr *mgr, bool verbose)
 {
   printf("  | ========== pgmgr_debug_print ==========\r\n");
 
-  printf("  | pgmgr = %p\r\n", mgr);
+  printf("  | pgmgr = %p\r\n", (void *)mgr);
   if (mgr == NULL)
     return;
 
@@ -681,15 +681,15 @@ void pgmgr_debug_print(const struct PgMgr *mgr, bool verbose)
 
   for (uint32_t i = 0; i < mgr->roots_n; i += 1)
   {
-    printf("  |   roots[%d] = %p\r\n", i, &mgr->roots[i]);
-    printf("  |   roots[%d] = [%lx, %lx] -> %p\r\n", i, mgr->roots[i].start_addr, mgr->roots[i].end_addr, mgr->roots[i].root);
+    printf("  |   roots[%d] = %p\r\n", i, (void *)&mgr->roots[i]);
+    printf("  |   roots[%d] = [%lx, %lx] -> %p\r\n", i, mgr->roots[i].start_addr, mgr->roots[i].end_addr, (void *)mgr->roots[i].root);
 
     if (verbose)
     {
       uintptr_t num_pages = (mgr->roots[i].end_addr - mgr->roots[i].start_addr) >> PG_SFT;
       for (uint32_t j = 0; j < num_pages; j += 1)
       {
-        printf("  |     pgmgr.roots[%3d].dsp[%3d] @ %p = %lx", i, j, &mgr->roots[i].root[j], mgr->roots[i].root[j].addr);
+        printf("  |     pgmgr.roots[%3d].dsp[%3d] @ %p = %lx", i, j, (void *)&mgr->roots[i].root[j], mgr->roots[i].root[j].addr);
         if (mgr->roots[i].root[j].flags & PGDSP_USED)
           printf(" , USED");
         printf("\r\n");
