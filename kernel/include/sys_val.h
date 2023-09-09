@@ -3,8 +3,10 @@
 
 struct PgMgr;
 
-struct SysAddr {
+struct SysAddr
+{
   struct PgMgr *pgmgr;
+  struct SlabMgr *slabmgr;
 };
 
 extern struct SysAddr SYSADDR;

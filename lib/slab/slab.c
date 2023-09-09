@@ -106,7 +106,7 @@ static bool slab_alloc_init(struct SlabAlloc *alloc, uint32_t obj_sz, uint32_t o
   return true;
 }
 
-struct SlabAlloc *slab_create(struct SlabMgr *mgr, uint32_t obj_sz, uint32_t obj_align)
+struct SlabAlloc *slab_create(struct SlabMgr *mgr, uint32_t obj_sz, uint32_t obj_align, void *(*func_alloc_page)(uint8_t, uint16_t))
 {
   if (mgr->slab_alloc_n >= SLABMGR_CAP)
     return NULL;
@@ -119,6 +119,8 @@ struct SlabAlloc *slab_create(struct SlabMgr *mgr, uint32_t obj_sz, uint32_t obj
 
   if (!slab_alloc_init(alloc, obj_sz, obj_align))
     return NULL;
+
+  alloc->func_alloc_page = func_alloc_page;
 
   return alloc;
 }

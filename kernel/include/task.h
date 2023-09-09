@@ -75,8 +75,7 @@ struct kTaskDsp
 
 struct kTaskDspMgr
 {
-  struct kTaskDsp task_arr[USER_STACK_ARRAY_CNT];
-  struct kTaskDsp *free_list_head;
+  struct SlabAlloc *task_alloc;
   struct kTaskDsp *idle_task;
   int64_t next_tid;
   struct kHtTask map_tid_to_td;

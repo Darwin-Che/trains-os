@@ -103,7 +103,7 @@ el1_entry:
 
     // Perform bootstrapping
     // x0 will be the return value: kernel stack
-    bl k_bootstrap
+    bl k_bootstrap_pgmgr
 
     // initialize SP
     msr SPSel, #1

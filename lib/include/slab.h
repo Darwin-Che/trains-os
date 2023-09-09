@@ -75,7 +75,8 @@ struct SlabMgr {
 };
 
 struct SlabAlloc *slab_create(struct SlabMgr *mgr, uint32_t obj_sz,
-                              uint32_t obj_align);
+                              uint32_t obj_align,
+                              void *(*func_alloc_page)(uint8_t, uint16_t));
 
 void *slab_alloc(struct SlabAlloc *alloc, uint32_t flag);
 

@@ -8,16 +8,12 @@
 #include "lib/include/hashtable.h"
 #include "pgmgr.h"
 #include "sys_val.h"
+#include "slab_kernel.h"
+#include "lib/include/slab.h"
 
 void k_tmgr_init(struct kTaskDspMgr *mgr)
 {
-  mgr->free_list_head = NULL;
-  // 0 -> 1 -> ... -> n-1
-  for (int i = USER_STACK_ARRAY_CNT - 1; i >= 0; i -= 1)
-  {
-    mgr->task_arr[i].tid = K_TID_INVALID;
-    LL_PREPEND2(mgr->free_list_head, &mgr->task_arr[i], next_free);
-  }
+  mgr->task_alloc = slab_create(SYSADDR.slabmgr, sizeof(struct kTaskDsp), _Alignof(struct kTaskDsp), slab_kernel_func_alloc_page);
 
   HT_INIT(&mgr->map_tid_to_td, K_TASK_HT_BUCKSZ, K_TASK_HT_CAPACITY);
 
@@ -33,13 +29,12 @@ struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr, uint8_t sz)
     return NULL;
   }
 
-  struct kTaskDsp *free_task = mgr->free_list_head;
+  struct kTaskDsp *free_task = slab_alloc(mgr->task_alloc, 0);
   if (free_task == NULL)
   {
     DEBUG_PRINT("No Free TaskDsp Left!\r\n");
     return NULL;
   }
-  LL_DELETE2(mgr->free_list_head, free_task, next_free);
 
   free_task->stack_addr = (uintptr_t)stack_addr;
   free_task->stack_sz = 1 << sz;
@@ -60,8 +55,7 @@ void k_tmgr_destroy_task(struct kTaskDspMgr *mgr, struct kTaskDsp *td)
   pg_free_page(SYSADDR.pgmgr, (void *)td->stack_addr);
 
   // change any flags for td
-  LL_PREPEND2(mgr->free_list_head, td, next_free);
-  td->tid = K_TID_INVALID;
+  slab_free(mgr->task_alloc, td);
 }
 
 void k_td_init_user_task_default_wrapper(void (*user_func_addr)())
