@@ -49,4 +49,5 @@ void k_bootstrap_slab()
 {
   // ALLOC = sizeof(struct SlabMgr); ~= 4096 Bytes
   SYSADDR.slabmgr = pg_alloc_page(SYSADDR.pgmgr, 12, 0);
+  SYSADDR.slabmgr->slab_alloc_n = 0;
 }

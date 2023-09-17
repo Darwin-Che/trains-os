@@ -109,16 +109,25 @@ static bool slab_alloc_init(struct SlabAlloc *alloc, uint32_t obj_sz, uint32_t o
 struct SlabAlloc *slab_create(struct SlabMgr *mgr, uint32_t obj_sz, uint32_t obj_align, void *(*func_alloc_page)(uint8_t, uint16_t))
 {
   if (mgr->slab_alloc_n >= SLABMGR_CAP)
+  {
+    printf("slab_create capacity reached %u\n", mgr->slab_alloc_n);
     return NULL;
+  }
 
   if (!slab_create_allow(obj_sz, obj_align))
+  {
+    printf("slab_create_allow failed %u %u\n", obj_sz, obj_align);
     return NULL;
+  }
 
   struct SlabAlloc *alloc = &mgr->slab_alloc[mgr->slab_alloc_n];
   mgr->slab_alloc_n += 1;
 
   if (!slab_alloc_init(alloc, obj_sz, obj_align))
+  {
+    printf("slab_alloc_init failed %p %u %u\n", alloc, obj_sz, obj_align);
     return NULL;
+  }
 
   alloc->func_alloc_page = func_alloc_page;
 

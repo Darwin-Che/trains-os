@@ -15,6 +15,12 @@ void k_tmgr_init(struct kTaskDspMgr *mgr)
 {
   mgr->task_alloc = slab_create(SYSADDR.slabmgr, sizeof(struct kTaskDsp), _Alignof(struct kTaskDsp), slab_kernel_func_alloc_page);
 
+  ASSERT_MSG(mgr->task_alloc != NULL, "slab_create gives NULL\n");
+
+#ifdef DEBUG
+  printf("mgr->task_alloc = %p\n", mgr->task_alloc);
+#endif
+
   HT_INIT(&mgr->map_tid_to_td, K_TASK_HT_BUCKSZ, K_TASK_HT_CAPACITY);
 
   mgr->next_tid = 0;
@@ -22,17 +28,18 @@ void k_tmgr_init(struct kTaskDspMgr *mgr)
 
 struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr, uint8_t sz)
 {
-  void *stack_addr = pg_alloc_page(SYSADDR.pgmgr, sz, 0); // 16MB = 2^4 MB = 2^24 Bytes
-  if (stack_addr == NULL)
-  {
-    DEBUG_PRINT("No Free Space for the stack!\r\n");
-    return NULL;
-  }
-
   struct kTaskDsp *free_task = slab_alloc(mgr->task_alloc, 0);
   if (free_task == NULL)
   {
     DEBUG_PRINT("No Free TaskDsp Left!\r\n");
+    return NULL;
+  }
+
+  void *stack_addr = pg_alloc_page(SYSADDR.pgmgr, sz, 0); // 16MB = 2^4 MB = 2^24 Bytes
+  if (stack_addr == NULL)
+  {
+    DEBUG_PRINT("No Free Space for the stack!\r\n");
+    slab_free(mgr->task_alloc, free_task);
     return NULL;
   }
 
@@ -44,6 +51,7 @@ struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr, uint8_t sz)
   // Insert into hashtable tid->td
   HT_INSERT_KV(&mgr->map_tid_to_td, free_task->tid, free_task);
 
+  DEBUG_PRINT("k_tmgr_get_free_task succeeds!\r\n");
   return free_task;
 }
 
