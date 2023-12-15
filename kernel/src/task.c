@@ -10,6 +10,7 @@
 #include "sys_val.h"
 #include "slab_kernel.h"
 #include "lib/include/slab.h"
+#include "lib/include/rbtree.h"
 
 void k_tmgr_init(struct kTaskDspMgr *mgr)
 {
@@ -21,7 +22,7 @@ void k_tmgr_init(struct kTaskDspMgr *mgr)
   printf("mgr->task_alloc = %p\n", mgr->task_alloc);
 #endif
 
-  HT_INIT(&mgr->map_tid_to_td, K_TASK_HT_BUCKSZ, K_TASK_HT_CAPACITY);
+  mgr->map_tid = RB_ROOT;
 
   mgr->next_tid = 0;
 }
@@ -48,8 +49,14 @@ struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr, uint8_t sz)
   free_task->tid = mgr->next_tid;
   mgr->next_tid += 1;
 
-  // Insert into hashtable tid->td
-  HT_INSERT_KV(&mgr->map_tid_to_td, free_task->tid, free_task);
+  // Insert into rbtree tid->td
+  struct rb_node *node = rb_find_add(&free_task->rb_link_tid, &mgr->map_tid, k_td_rb_cmp_tid);
+  if (node != NULL)
+  {
+    DEBUG_PRINT("Duplicate task id %ld!\r\n", free_task->tid);
+    slab_free(mgr->task_alloc, free_task);
+    return NULL;
+  }
 
   DEBUG_PRINT("k_tmgr_get_free_task succeeds!\r\n");
   return free_task;
@@ -57,8 +64,8 @@ struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr, uint8_t sz)
 
 void k_tmgr_destroy_task(struct kTaskDspMgr *mgr, struct kTaskDsp *td)
 {
-  // Remove from hash table tid->td
-  HT_DEL_BY_KEY(&mgr->map_tid_to_td, &td->tid);
+  // Remove from rbtree tid->td
+  rb_erase(&td->rb_link_tid, &mgr->map_tid);
 
   pg_free_page(SYSADDR.pgmgr, (void *)td->stack_addr);
 

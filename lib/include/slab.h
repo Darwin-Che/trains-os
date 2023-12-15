@@ -6,14 +6,14 @@
 #include <stdint.h>
 
 #define MSB_POS(x)                                                             \
-  {                                                                            \
+  __extension__({                                                              \
     uint8_t pos = sizeof(x) * 8 - 1;                                           \
     for (; pos > 0; pos -= 1) {                                                \
       if (x & (1 << pos))                                                      \
         break;                                                                 \
     }                                                                          \
     pos;                                                                       \
-  }
+  })
 
 struct SlabMeta {
   // In order to prevent cache imbalance, try to make obj_size

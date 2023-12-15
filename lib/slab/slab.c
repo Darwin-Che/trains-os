@@ -67,7 +67,7 @@ static bool slab_alloc_init(struct SlabAlloc *alloc, uint32_t obj_sz, uint32_t o
   alloc->empty_slabs = NULL;
   alloc->slabs = NULL;
 
-  uint32_t obj_align_sft = (MSB_POS(obj_align));
+  uint32_t obj_align_sft = MSB_POS(obj_align);
 
   /*
   | sizeof(Slab) | obj_n * 1 | padding | obj_n * obj_sz | end_padding |
