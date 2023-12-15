@@ -8,60 +8,69 @@
 #include "lib/include/hashtable.h"
 #include "pgmgr.h"
 #include "sys_val.h"
+#include "slab_kernel.h"
+#include "lib/include/slab.h"
+#include "lib/include/rbtree.h"
 
 void k_tmgr_init(struct kTaskDspMgr *mgr)
 {
-  mgr->free_list_head = NULL;
-  // 0 -> 1 -> ... -> n-1
-  for (int i = USER_STACK_ARRAY_CNT - 1; i >= 0; i -= 1)
-  {
-    mgr->task_arr[i].tid = K_TID_INVALID;
-    LL_PREPEND2(mgr->free_list_head, &mgr->task_arr[i], next_free);
-  }
+  mgr->task_alloc = slab_create(SYSADDR.slabmgr, sizeof(struct kTaskDsp), _Alignof(struct kTaskDsp), slab_kernel_func_alloc_page);
 
-  HT_INIT(&mgr->map_tid_to_td, K_TASK_HT_BUCKSZ, K_TASK_HT_CAPACITY);
+  ASSERT_MSG(mgr->task_alloc != NULL, "slab_create gives NULL\n");
+
+#ifdef DEBUG
+  printf("mgr->task_alloc = %p\n", mgr->task_alloc);
+#endif
+
+  mgr->map_tid = RB_ROOT;
 
   mgr->next_tid = 0;
 }
 
 struct kTaskDsp *k_tmgr_get_free_task(struct kTaskDspMgr *mgr, uint8_t sz)
 {
-  void *stack_addr = pg_alloc_page(SYSADDR.pgmgr, sz, 0); // 16MB = 2^4 MB = 2^24 Bytes
-  if (stack_addr == NULL)
-  {
-    DEBUG_PRINT("No Free Space for the stack!\r\n");
-    return NULL;
-  }
-
-  struct kTaskDsp *free_task = mgr->free_list_head;
+  struct kTaskDsp *free_task = slab_alloc(mgr->task_alloc, 0);
   if (free_task == NULL)
   {
     DEBUG_PRINT("No Free TaskDsp Left!\r\n");
     return NULL;
   }
-  LL_DELETE2(mgr->free_list_head, free_task, next_free);
+
+  void *stack_addr = pg_alloc_page(SYSADDR.pgmgr, sz, 0); // 16MB = 2^4 MB = 2^24 Bytes
+  if (stack_addr == NULL)
+  {
+    DEBUG_PRINT("No Free Space for the stack!\r\n");
+    slab_free(mgr->task_alloc, free_task);
+    return NULL;
+  }
 
   free_task->stack_addr = (uintptr_t)stack_addr;
   free_task->stack_sz = 1 << sz;
   free_task->tid = mgr->next_tid;
   mgr->next_tid += 1;
 
-  // Insert into hashtable tid->td
-  HT_INSERT_KV(&mgr->map_tid_to_td, free_task->tid, free_task);
+  // Insert into rbtree tid->td
+  struct rb_node *node = rb_find_add(&free_task->rb_link_tid, &mgr->map_tid, k_td_rb_cmp_tid);
+  if (node != NULL)
+  {
+    DEBUG_PRINT("Duplicate task id %ld!\r\n", free_task->tid);
+    slab_free(mgr->task_alloc, free_task);
+    return NULL;
+  }
 
+  DEBUG_PRINT("k_tmgr_get_free_task succeeds!\r\n");
   return free_task;
 }
 
 void k_tmgr_destroy_task(struct kTaskDspMgr *mgr, struct kTaskDsp *td)
 {
-  // Remove from hash table tid->td
-  HT_DEL_BY_KEY(&mgr->map_tid_to_td, &td->tid);
+  // Remove from rbtree tid->td
+  rb_erase(&td->rb_link_tid, &mgr->map_tid);
 
   pg_free_page(SYSADDR.pgmgr, (void *)td->stack_addr);
 
   // change any flags for td
-  LL_PREPEND2(mgr->free_list_head, td, next_free);
-  td->tid = K_TID_INVALID;
+  slab_free(mgr->task_alloc, td);
 }
 
 void k_td_init_user_task_default_wrapper(void (*user_func_addr)())

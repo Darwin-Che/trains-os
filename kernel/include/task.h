@@ -2,9 +2,10 @@
 #define K_TASK_H
 
 #include "hashtable.h"
+#include "kernel/uapi.h"
+#include "lib/include/rbtree.h"
 #include "lib/include/utlist.h"
 #include "mailbox.h"
-#include "kernel/uapi.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -46,7 +47,8 @@ struct kTaskDsp
   // offset 0x18
 
   // written by `syscall_handler`
-  uint64_t esr_el1; // 0 if interrupt, otherwise take bits [0, 24] for the syscall_no
+  uint64_t
+      esr_el1; // 0 if interrupt, otherwise take bits [0, 24] for the syscall_no
   uint64_t syscall_retval;
 
   // int64_t stack_id;
@@ -70,16 +72,17 @@ struct kTaskDsp
     // struct kTaskDsp *next_send_task;
   };
 
+  struct rb_node rb_link_tid;
+
   struct kMailbox mailbox;
 };
 
 struct kTaskDspMgr
 {
-  struct kTaskDsp task_arr[USER_STACK_ARRAY_CNT];
-  struct kTaskDsp *free_list_head;
+  struct SlabAlloc *task_alloc;
   struct kTaskDsp *idle_task;
   int64_t next_tid;
-  struct kHtTask map_tid_to_td;
+  struct rb_root map_tid;
 };
 
 void k_tmgr_init(struct kTaskDspMgr *mgr);
@@ -92,13 +95,36 @@ int k_td_get_syscall_no(struct kTaskDsp *kd);
 void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td,
                          uint64_t priority, void (*user_func)());
 
-static inline struct kTaskDsp *k_task_mgr_get_task_dsp(struct kTaskDspMgr *mgr, int64_t tid)
+static inline int k_td_rb_cmp_tid_key(const void *key, const struct rb_node *node)
 {
-  struct kHtTaskElem *elem;
-  HT_FIND(&mgr->map_tid_to_td, &tid, elem);
-  if (elem == NULL)
+  int64_t diff = *(const int64_t *)key - rb_entry(node, struct kTaskDsp, rb_link_tid)->tid;
+  if (diff == 0)
+    return 0;
+  else if (diff < 0)
+    return -1;
+  else
+    return 1;
+}
+
+static inline int k_td_rb_cmp_tid(struct rb_node *node1, const struct rb_node *node2)
+{
+  int64_t diff = rb_entry(node1, struct kTaskDsp, rb_link_tid)->tid -
+                 rb_entry(node2, struct kTaskDsp, rb_link_tid)->tid;
+  if (diff == 0)
+    return 0;
+  else if (diff < 0)
+    return -1;
+  else
+    return 1;
+}
+
+static inline struct kTaskDsp *k_task_mgr_get_task_dsp(struct kTaskDspMgr *mgr,
+                                                       int64_t tid)
+{
+  struct rb_node *node = rb_find(&tid, &mgr->map_tid, k_td_rb_cmp_tid_key);
+  if (node == NULL)
     return NULL;
-  return elem->val;
+  return rb_entry(node, struct kTaskDsp, rb_link_tid);
 }
 
 #endif

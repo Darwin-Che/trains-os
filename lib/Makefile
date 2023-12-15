@@ -2,7 +2,7 @@ include ../common.mk
 
 LDFLAGS:=-Wl,-r
 
-LIBDIRS := base libfdt
+LIBDIRS := base libfdt slab rbtree
 SOURCES := $(foreach dir,$(LIBDIRS),$(wildcard $(dir)/*.c) $(wildcard $(dir)/*.S) $(wildcard $(dir)/*/*.c))
 OBJECTS := $(patsubst %.c, build/%.o, $(patsubst %.S, build/%.o, $(SOURCES)))
 DEPENDS := $(patsubst %.c, build/%.d, $(patsubst %.S, build/%.d, $(SOURCES)))

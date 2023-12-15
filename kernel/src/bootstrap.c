@@ -2,6 +2,7 @@
 #include "sys_val.h"
 #include "pgmgr_init.h"
 #include "pgmgr.h"
+#include "lib/include/slab.h"
 
 extern void create_page_tables();
 extern void set_page_tables();
@@ -25,7 +26,7 @@ static struct PgInitSeg segs[] = {
     },
 };
 
-void *k_bootstrap()
+void *k_bootstrap_pgmgr()
 {
   /* Set up MMU */
   create_page_tables();
@@ -42,4 +43,11 @@ void *k_bootstrap()
   SYSADDR.pgmgr = pgmgr;
 
   return pg_alloc_page(pgmgr, KERNEL_STACK_SFT, 0);
+}
+
+void k_bootstrap_slab()
+{
+  // ALLOC = sizeof(struct SlabMgr); ~= 4096 Bytes
+  SYSADDR.slabmgr = pg_alloc_page(SYSADDR.pgmgr, 12, 0);
+  SYSADDR.slabmgr->slab_alloc_n = 0;
 }

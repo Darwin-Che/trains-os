@@ -16,6 +16,8 @@ extern void turn_on_mmu();
 
 int k_main()
 {
+  k_bootstrap_slab();
+
   init_gpio();
   init_spi(0);
   init_uart(0);
