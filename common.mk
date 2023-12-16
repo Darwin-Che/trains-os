@@ -1,4 +1,6 @@
-include ../xdir.mk
+SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+
+include $(SELF_DIR)/../xdir.mk
 
 ARCH=cortex-a72
 TRIPLE=aarch64-none-elf
@@ -7,6 +9,9 @@ CC:=$(XBINDIR)/$(TRIPLE)-gcc
 OBJSIZE:=$(XBINDIR)/$(TRIPLE)-size
 OBJCOPY:=$(XBINDIR)/$(TRIPLE)-objcopy
 OBJDUMP:=$(XBINDIR)/$(TRIPLE)-objdump
+READELF:=$(XBINDIR)/$(TRIPLE)-readelf
+AR:=$(XBINDIR)/$(TRIPLE)-ar
+RANLIB:=$(XBINDIR)/$(TRIPLE)-ranlib
 
 # COMPILE OPTIONS
 WARNINGS=-Wall -Wextra -Wpedantic -Wno-unused-const-variable
@@ -20,5 +25,6 @@ define dump_dir
 endef
 
 define dump_file
-	$(patsubst build/%.o,dump/%.dp,$1)
+	$(subst build/,dump/,$1)
+	# $(patsubst build/%.o,dump/%.dp,$1)
 endef

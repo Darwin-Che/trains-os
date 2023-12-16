@@ -14,7 +14,7 @@ SECTIONS {
 		KEEP("build/kernel.o"(.text.boot))
     build/kernel.o (.text*)
     build/user.o (.text*)
-    build/lib.o (.text*)
+    /* build/lib.o (.text*) */
 	}
 
   /* Data Segment At 16MB */
@@ -24,7 +24,7 @@ SECTIONS {
   .data : {
     build/kernel.o (.*)
     build/user.o (.*)
-    build/lib.o (.*)
+    /* build/lib.o (.*) */
   }
 
   PROVIDE(LINKER_CODE_END = .);

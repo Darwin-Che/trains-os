@@ -4,16 +4,13 @@ include common.mk
 
 LDFLAGS:=-Wl,-nmagic -Wl,-Tlinker.ld
 
-SUBDIRS := kernel user lib
-OBJECTS := $(patsubst %, build/%.o, $(SUBDIRS))
-
 all: kernel8.img
 
 clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user clean
 	$(MAKE) -C lib clean
-	rm -f $(OBJECTS) kernel8.img kernel8.elf
+	rm -f kernel8.img kernel8.elf
 	rm -rf build/
 	rm -rf dump/
 
@@ -23,18 +20,30 @@ size:
 kernel8.img: kernel8.elf
 	$(OBJCOPY) $< -O binary $@
 
-kernel8.elf: $(OBJECTS) linker.ld
+kernel8.elf: linker.ld lib build/kernel.o build/user.o pie-c
 	$(dir_guard) build/
-	$(CC) $(CFLAGS) $(filter-out %.ld, $^) -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) build/kernel.o build/user.o -o $@ $(LDFLAGS) -Llib/build -lbase -lrbtree -lslab
 	@$(OBJDUMP) -d -j .text kernel8.elf | fgrep -q q0 && printf "\n***** WARNING: SIMD INSTRUCTIONS DETECTED! *****\n\n" || true
+	$(OBJDUMP) -d $@ > dump/kernel8.elf
 
-.PHONY: $(OBJECTS)
+.PHONY: lib build/kernel.o build/user.o pie-c
 
-$(OBJECTS): build/%.o: 
+lib:
+	$(MAKE) -C lib/
+
+build/kernel.o: lib
 	$(dir_guard) build/
 	$(dir_guard) dump/
-	$(MAKE) -C $(patsubst build/%.o,%,$@)
+	$(MAKE) -C kernel
 	$(OBJDUMP) -d $@ > $(call dump_file,$@)
-	# cp $(patsubst build/%.o,%,$@)/$@ $@
 
--include $(DEPENDS)
+build/user.o: lib
+	$(dir_guard) build/
+	$(dir_guard) dump/
+	$(MAKE) -C user
+	$(OBJDUMP) -d $@ > $(call dump_file,$@)
+
+pie-c: lib
+	$(MAKE) -C pie-c
+
+# -include $(DEPENDS)
