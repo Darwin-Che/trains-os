@@ -4,7 +4,7 @@
 #include "lib/include/util.h"
 #include "global_state.h"
 #include "debug_print.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "lib/include/hashtable.h"
 #include "pgmgr.h"
 #include "sys_val.h"

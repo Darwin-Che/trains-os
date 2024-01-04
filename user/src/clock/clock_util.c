@@ -1,5 +1,5 @@
 #include "clock.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "msg/msg.h"
 
 void clock_delay_main()

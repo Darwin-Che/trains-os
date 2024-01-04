@@ -1,5 +1,5 @@
 #include "msg/msg.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 
 void clock_notifier_main()
 {

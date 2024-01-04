@@ -10,6 +10,7 @@ clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user clean
 	$(MAKE) -C lib clean
+	$(MAKE) -C pie-c clean
 	rm -f kernel8.img kernel8.elf
 	rm -rf build/
 	rm -rf dump/
@@ -22,9 +23,9 @@ kernel8.img: kernel8.elf
 
 kernel8.elf: linker.ld lib build/kernel.o build/user.o pie-c
 	$(dir_guard) build/
-	$(CC) $(CFLAGS) build/kernel.o build/user.o -o $@ $(LDFLAGS) -Llib/build -lbase -lrbtree -lslab
+	$(CC) $(CFLAGS) build/kernel.o build/user.o pie-c/build/test.o -o $@ $(LDFLAGS) -Llib/build -lbase -lrbtree -lslab -lsyscall
 	@$(OBJDUMP) -d -j .text kernel8.elf | fgrep -q q0 && printf "\n***** WARNING: SIMD INSTRUCTIONS DETECTED! *****\n\n" || true
-	$(OBJDUMP) -d $@ > dump/kernel8.elf
+	$(OBJDUMP) -d -j .pie $@ > dump/kernel8.elf
 
 .PHONY: lib build/kernel.o build/user.o pie-c
 

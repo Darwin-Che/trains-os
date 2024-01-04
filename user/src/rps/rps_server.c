@@ -1,4 +1,4 @@
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "lib/include/utlist.h"
 #include "rps.h"
 #include "msg/msg.h"

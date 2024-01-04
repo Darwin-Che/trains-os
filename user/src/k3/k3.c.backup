@@ -1,4 +1,4 @@
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "msg/msg.h"
 
 void k3_main()

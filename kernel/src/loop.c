@@ -1,7 +1,7 @@
 #include "loop.h"
 #include "lib/include/timer.h"
 #include "lib/include/rpi.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "task.h"
 #include "lib/include/util.h"
 #include "util.h"

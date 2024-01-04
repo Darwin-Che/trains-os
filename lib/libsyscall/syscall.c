@@ -1,5 +1,5 @@
-#include "kernel/uapi.h"
-#include "msg/msg.h"
+#include "uapi.h"
+#include "../../msg/msg.h"
 #include "lib/include/rpi.h"
 
 #define KE_WHO_IS_RETRY_LIMIT 50

@@ -1,3 +1,7 @@
+/* TARGET(binary) 
+INPUT ("pie-c/bin/test.img")
+OUTPUT_FORMAT(default) */
+
 ENTRY(_start)           /* ELF entry symbol - no strictly needed */
 
 SECTIONS {
@@ -25,6 +29,12 @@ SECTIONS {
     build/kernel.o (.*)
     build/user.o (.*)
     /* build/lib.o (.*) */
+  }
+
+  /* Manually add pie-c */
+  . = 0x3000000;
+  .pie : {
+    pie-c/build/test.o (.*)
   }
 
   PROVIDE(LINKER_CODE_END = .);

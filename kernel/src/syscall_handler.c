@@ -6,7 +6,7 @@
 #include "mailbox.h"
 #include "lib/include/rpi.h"
 #include "debug_print.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "lib/include/timer.h"
 #include "lib/include/util.h"
 #include "interrupt.h"

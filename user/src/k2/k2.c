@@ -1,5 +1,5 @@
 #include "k2.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "lib/include/printf.h"
 #include "lib/include/timer.h"
 

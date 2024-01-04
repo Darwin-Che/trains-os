@@ -1,8 +1,8 @@
 #ifndef K_SCHEDULER_H
 #define K_SCHEDULER_H
 
-#include "kernel/uapi.h"
 #include "lib/include/heap.h"
+#include "lib/include/uapi.h"
 #include "task.h"
 #include <stdint.h>
 

@@ -1,9 +1,9 @@
 #ifndef U_KE_PRINT_H
 #define U_KE_PRINT_H
 
-#include "kernel/uapi.h"
 #include "lib/include/assert.h"
 #include "lib/include/rpi.h"
+#include "lib/include/uapi.h"
 
 #define STOP_ALL_MARKLIN 97
 

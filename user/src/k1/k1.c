@@ -1,59 +1,51 @@
 #include "lib/include/rpi.h"
 #include "lib/include/printf.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
+#include "lib/include/util.h"
 
 void secondary_user_task();
 
 void first_user_task()
 {
-  char msg_start[] = "FirstUserTask: starting\r\n";
-  uart_puts(0, 0, msg_start, sizeof(msg_start) - 1);
+  char msg[1024];
 
-  char msg_create[] = "Created: 0\r\n";
+  int term_tid = ke_who_is(NAME_UART_TERM_SERVER);
 
-  msg_create[9] = '0' + ke_create(0, secondary_user_task);
+  int my_tid = ke_my_tid();
+  sprintf(msg, "FirstUserTask started tid=%d (Priority 0)\r\n", my_tid);
+  ke_puts(term_tid, TERM_CHANNEL, msg, strlen(msg));
 
-  uart_puts(0, 0, msg_create, sizeof(msg_create) - 1);
+  int child_tid;
 
-  msg_create[9] = '0' + ke_create(0, secondary_user_task);
-  uart_puts(0, 0, msg_create, sizeof(msg_create) - 1);
+  child_tid = ke_create(0, secondary_user_task);
+  sprintf(msg, "Created: %d (Priority 0)\r\n", child_tid);
+  ke_puts(term_tid, TERM_CHANNEL, msg, strlen(msg));
 
-  msg_create[9] = '0' + ke_create(2, secondary_user_task);
-  uart_puts(0, 0, msg_create, sizeof(msg_create) - 1);
+  child_tid = ke_create(2, secondary_user_task);
+  sprintf(msg, "Created: %d (Priority 2)\r\n", child_tid);
+  ke_puts(term_tid, TERM_CHANNEL, msg, strlen(msg));
 
-  msg_create[9] = '0' + ke_create(2, secondary_user_task);
-  uart_puts(0, 0, msg_create, sizeof(msg_create) - 1);
+  sprintf(msg, "FirstUserTask: exiting\r\n");
+  ke_puts(term_tid, TERM_CHANNEL, msg, strlen(msg));
 
-  char msg_exit[] = "FirstUserTask: exiting\r\n";
-  uart_puts(0, 0, msg_exit, sizeof(msg_exit) - 1);
-
-  ke_exit();
+  // ke_exit();
 }
 
 void secondary_user_task()
 {
-  char msg1[] = "  Task ID : 0; ";
-  char msg2[] = "Parent Task ID: 0 \r\n";
+  int term_tid = ke_who_is(NAME_UART_TERM_SERVER);
 
-  msg1[12] = '0' + ke_my_tid();
+  char msg[1024];
+  int my_tid = ke_my_tid();
   int parent_tid = ke_my_parent_tid();
-  if (parent_tid == -1)
-  {
-    msg2[16] = '-';
-    msg2[17] = '1';
-  }
-  else
-  {
-    msg2[16] = '0' + parent_tid;
-    msg2[17] = ' ';
-  }
-  uart_puts(0, 0, msg1, sizeof(msg1) - 1);
-  uart_puts(0, 0, msg2, sizeof(msg2) - 1);
+
+  sprintf(msg, "  Second tid=%d parent_tid=%d\r\n", my_tid, parent_tid);
+  ke_puts(term_tid, TERM_CHANNEL, msg, strlen(msg));
 
   ke_yield();
 
-  uart_puts(0, 0, msg1, sizeof(msg1) - 1);
-  uart_puts(0, 0, msg2, sizeof(msg2) - 1);
+  sprintf(msg, "  Second tid=%d parent_tid=%d Yield Finished\r\n", my_tid, parent_tid);
+  ke_puts(term_tid, TERM_CHANNEL, msg, strlen(msg));
 
   // Testing ke_exit fail safe protection
   // ke_exit();

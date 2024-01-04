@@ -2,7 +2,7 @@ include ../common.mk
 
 LDFLAGS:=-Wl,-r
 
-LIBDIRS := libbase libfdt libslab librbtree
+LIBDIRS := libbase libfdt libslab librbtree libsyscall
 SOURCES := $(foreach dir,$(LIBDIRS),$(wildcard $(dir)/*.c) $(wildcard $(dir)/*.S) $(wildcard $(dir)/*/*.c))
 LIBS := $(foreach dir,$(LIBDIRS),build/$(dir).a)
 OBJECTS := $(patsubst %.c, build/%.o, $(patsubst %.S, build/%.o, $(SOURCES)))

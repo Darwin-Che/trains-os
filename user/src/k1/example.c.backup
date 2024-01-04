@@ -1,6 +1,6 @@
 // #include "lib/include/rpi.h"
 // #include "lib/include/printf.h"
-// #include "kernel/uapi.h"
+// #include "lib/include/uapi.h"
 
 // void user_msg_child()
 // {

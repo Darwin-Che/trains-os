@@ -1,4 +1,4 @@
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "lib/include/rpi.h"
 #include "lib/include/ring_buffer.h"
 #include "msg/msg.h"

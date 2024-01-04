@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "msg/msg.h"
 #include "lib/include/assert.h"
 #include "lib/include/timer.h"
