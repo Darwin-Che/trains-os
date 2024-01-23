@@ -9,10 +9,19 @@
 #include "debug_print.h"
 #include "pgmgr.h"
 #include "sys_val.h"
+#include "loader/include/loader.h"
 
 extern void exception_vector_setup();
 extern void k_page_table_print_all();
 extern void turn_on_mmu();
+
+void idle_task()
+{
+  while (1)
+  {
+    asm volatile("wfi");
+  }
+}
 
 int k_main()
 {
@@ -58,7 +67,8 @@ int k_main()
     printf("Failed to create idle_td\r\n");
     return 0;
   }
-  k_td_init_user_task(idle_td, NULL, K_SCHED_PRIO_MIN, idle_task);
+
+  k_td_init_user_task(idle_td, NULL, K_SCHED_PRIO_MIN, idle_task, 0, NULL, 0);
   gs.task_mgr.idle_task = idle_td;
 
   // Our first task
@@ -68,7 +78,7 @@ int k_main()
     printf("Failed to create user_entry_td\r\n");
     return 0;
   }
-  k_td_init_user_task(td, NULL, K_SCHED_PRIO_MAX, user_entry); // init other fields
+  k_td_init_user_task(td, NULL, K_SCHED_PRIO_MAX, load_elf, 0x4000000, NULL, 0); // init other fields
   k_sched_add_ready(&gs.scheduler, td);
 
   k_gic_enable();

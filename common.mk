@@ -10,12 +10,13 @@ OBJSIZE:=$(XBINDIR)/$(TRIPLE)-size
 OBJCOPY:=$(XBINDIR)/$(TRIPLE)-objcopy
 OBJDUMP:=$(XBINDIR)/$(TRIPLE)-objdump
 READELF:=$(XBINDIR)/$(TRIPLE)-readelf
+STRIP:=$(XBINDIR)/$(TRIPLE)-strip
 AR:=$(XBINDIR)/$(TRIPLE)-ar
 RANLIB:=$(XBINDIR)/$(TRIPLE)-ranlib
 
 # COMPILE OPTIONS
 WARNINGS=-Wall -Wextra -Wpedantic -Wno-unused-const-variable
-CFLAGS:=-g -pipe -static $(WARNINGS) -ffreestanding -nostartfiles\
+CFLAGS:=-pipe -static $(WARNINGS) -ffreestanding -nostartfiles\
 	-mcpu=$(ARCH) -static-pie -mstrict-align -fno-builtin -mgeneral-regs-only -O3 -Iinclude -I..
 
 dir_guard=@mkdir -p

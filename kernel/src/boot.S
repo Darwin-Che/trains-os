@@ -149,11 +149,3 @@ memzero:
 id_pgd_addr:
   adrp x0, id_pgd
   ret
-
-.section ".bss"
-.balign 16
-stack:
-    .rept 0x10000
-    .byte 0
-    .endr
-stackend:

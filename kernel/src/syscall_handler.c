@@ -29,7 +29,7 @@ void k_create_handler(int priority, void (*func)())
     kg_current_td->syscall_retval = -1;
     return;
   }
-  k_td_init_user_task(td, parent_td, priority, func);
+  k_td_init_user_task(td, parent_td, priority, func, 0, NULL, 0);
   k_sched_add_ready(&kg_gs->scheduler, td);
   kg_current_td->syscall_retval = td->tid;
 }

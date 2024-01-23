@@ -1,0 +1,1 @@
+void load_elf(const char *elf_start);

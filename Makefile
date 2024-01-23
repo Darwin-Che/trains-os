@@ -10,7 +10,7 @@ clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user clean
 	$(MAKE) -C lib clean
-	$(MAKE) -C pie-c clean
+	cd pie-rust && ./make_clean.sh
 	rm -f kernel8.img kernel8.elf
 	rm -rf build/
 	rm -rf dump/
@@ -21,13 +21,14 @@ size:
 kernel8.img: kernel8.elf
 	$(OBJCOPY) $< -O binary $@
 
-kernel8.elf: linker.ld lib build/kernel.o build/user.o pie-c
+kernel8.elf: linker.ld lib build/kernel.o build/loader.o pie-rust
 	$(dir_guard) build/
-	$(CC) $(CFLAGS) build/kernel.o build/user.o pie-c/build/test.o -o $@ $(LDFLAGS) -Llib/build -lbase -lrbtree -lslab -lsyscall
+	$(CC) $(CFLAGS) build/kernel.o build/loader.o pie-rust/build/* -o $@ $(LDFLAGS) -Llib/build -lbase -lrbtree -lslab -lsyscall
 	@$(OBJDUMP) -d -j .text kernel8.elf | fgrep -q q0 && printf "\n***** WARNING: SIMD INSTRUCTIONS DETECTED! *****\n\n" || true
-	$(OBJDUMP) -d -j .pie $@ > dump/kernel8.elf
+	$(OBJDUMP) -D $@ > dump/kernel8.objdump
+	$(READELF) -a $@ > dump/kernel8.readelf
 
-.PHONY: lib build/kernel.o build/user.o pie-c
+.PHONY: lib build/kernel.o build/loader.o pie-rust
 
 lib:
 	$(MAKE) -C lib/
@@ -36,15 +37,15 @@ build/kernel.o: lib
 	$(dir_guard) build/
 	$(dir_guard) dump/
 	$(MAKE) -C kernel
+	$(STRIP) -g $@
 	$(OBJDUMP) -d $@ > $(call dump_file,$@)
 
-build/user.o: lib
+build/loader.o: lib
 	$(dir_guard) build/
 	$(dir_guard) dump/
-	$(MAKE) -C user
+	$(MAKE) -C loader
+	$(STRIP) -g $@
 	$(OBJDUMP) -d $@ > $(call dump_file,$@)
 
-pie-c: lib
-	$(MAKE) -C pie-c
-
-# -include $(DEPENDS)
+pie-rust: lib
+	cd pie-rust && ./make_all.sh
