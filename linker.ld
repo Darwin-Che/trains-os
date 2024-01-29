@@ -13,6 +13,7 @@ SECTIONS {
   /* 2^19 = 512KB */
   . = 0x80000;
 	.text : {
+    KEEP("build/kernel.o"(.text.boot))
     build/kernel.o (.text*)
     build/loader.o (.text*)
 		/* KEEP("build/kernel.o"(.text.boot))
@@ -33,13 +34,19 @@ SECTIONS {
 
   }
 
-  /* (3*16+12) * 2^20 = 60MB */
-  . = 0x3c00000;
+
+  /* 2 * 2^20 = 2MB */
+  . = 0x200000;
   PROVIDE(KERNEL_STACK_TOP = .);
+  /* 8 * 2^20 = 8MB */
+  . = 0x800000;
+  PROVIDE(KERNEL_STACK_END = .);
+
+  /* (3*16+12) * 2^20 = 60MB */
+  /* . = 0x3c00000; */
 
   /* (4*16) * 2^20 64MB */
   . = 0x4000000;
-  PROVIDE(KERNEL_STACK_END = .);
   PROVIDE(user_entry_elf_start = .);
   .user_entry_elf : {
     pie-rust/build/user_entry_elf.o (.*)

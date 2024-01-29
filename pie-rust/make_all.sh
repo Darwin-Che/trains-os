@@ -7,6 +7,7 @@ mkdir bin
 
 for program in $programs; do
   pushd $program
+  rustc --print cfg --target rpi4b.json
   make
   cp -f bin/* ../bin
   popd

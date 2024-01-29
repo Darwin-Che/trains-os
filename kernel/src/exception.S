@@ -98,6 +98,7 @@ handler_func_tabl:
   b k_recv_handler
   b k_reply_handler
   b k_await_event_handler
+  b k_mmap_handler
   b k_sys_health
   b k_uart_write_reg
   b k_uart_read_reg

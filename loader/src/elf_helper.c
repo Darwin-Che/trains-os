@@ -23,19 +23,19 @@ bool check_elf_hdr(bool p, const Elf64_Ehdr *hdr)
   bool check = check_elf_hdr_e_ident(p, hdr->e_ident);
   if (p)
   {
-    printf("e_type %d\n", hdr->e_type);
-    printf("e_machine %d\n", hdr->e_machine);
-    printf("e_version %d\n", hdr->e_version);
-    printf("e_entry 0x%llx\n", hdr->e_entry);
-    printf("e_phoff 0x%llx\n", hdr->e_phoff);
-    printf("e_shoff 0x%llx\n", hdr->e_shoff);
-    printf("e_flags %d\n", hdr->e_flags);
-    printf("e_ehsize %d\n", hdr->e_ehsize);
-    printf("e_phentsize %d\n", hdr->e_phentsize);
-    printf("e_phnum %d\n", hdr->e_phnum);
-    printf("e_shentsize %d\n", hdr->e_shentsize);
-    printf("e_shnum %d\n", hdr->e_shnum);
-    printf("e_shstrndx %d\n", hdr->e_shstrndx);
+    printf("e_type %d\r\n", hdr->e_type);
+    printf("e_machine %d\r\n", hdr->e_machine);
+    printf("e_version %d\r\n", hdr->e_version);
+    printf("e_entry 0x%llx\r\n", hdr->e_entry);
+    printf("e_phoff 0x%llx\r\n", hdr->e_phoff);
+    printf("e_shoff 0x%llx\r\n", hdr->e_shoff);
+    printf("e_flags %d\r\n", hdr->e_flags);
+    printf("e_ehsize %d\r\n", hdr->e_ehsize);
+    printf("e_phentsize %d\r\n", hdr->e_phentsize);
+    printf("e_phnum %d\r\n", hdr->e_phnum);
+    printf("e_shentsize %d\r\n", hdr->e_shentsize);
+    printf("e_shnum %d\r\n", hdr->e_shnum);
+    printf("e_shstrndx %d\r\n", hdr->e_shstrndx);
   }
   return check;
 }
@@ -55,16 +55,16 @@ void print_section_permission(const Elf64_Shdr *hdr)
   {
     printf("E");
   }
-  printf("\n");
+  printf("\r\n");
 }
 
 void print_section_progbits(const Elf64_Shdr *hdr)
 {
   print_section_permission(hdr);
-  printf("sh_addr 0x%llx\n", hdr->sh_addr);
-  printf("sh_offset 0x%llx\n", hdr->sh_offset);
-  printf("sh_size 0x%llx\n", hdr->sh_size);
-  printf("sh_addralign 0x%llx\n", hdr->sh_addralign);
+  printf("sh_addr 0x%llx\r\n", hdr->sh_addr);
+  printf("sh_offset 0x%llx\r\n", hdr->sh_offset);
+  printf("sh_size 0x%llx\r\n", hdr->sh_size);
+  printf("sh_addralign 0x%llx\r\n", hdr->sh_addralign);
 }
 
 void print_section_symtab(const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr)
@@ -75,7 +75,7 @@ void print_section_symtab(const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr)
   const char *shstr = memblock + shstr_hdr->sh_offset;
   const Elf64_Sym *sym_arr = (const Elf64_Sym *)(memblock + hdr->sh_offset);
 
-  printf("Number of Local Symbols (sh_info) = %d\n", hdr->sh_info);
+  printf("Number of Local Symbols (sh_info) = %d\r\n", hdr->sh_info);
 
   int num_entries = hdr->sh_size / hdr->sh_entsize;
   for (int i = 0; i < num_entries; i += 1)
@@ -117,7 +117,7 @@ void print_section_symtab(const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr)
     }
     printf("\t");
 
-    printf("0x%llx\n", symbol->st_value);
+    printf("0x%llx\r\n", symbol->st_value);
   }
 }
 
@@ -128,24 +128,24 @@ bool check_section(bool p, const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr)
   const char *shstr = memblock + shstr_hdr->sh_offset;
 
   if (p)
-    printf("===== Section Header =====\n");
+    printf("===== Section Header =====\r\n");
 
   switch (hdr->sh_type)
   {
   case SHT_NULL:
     if (p)
-      printf("SHT_NULL\n");
+      printf("SHT_NULL\r\n");
     return true;
 
   case SHT_STRTAB:
     if (p)
-      printf("SHT_STRTAB %s\n", &shstr[hdr->sh_name]);
+      printf("SHT_STRTAB %s\r\n", &shstr[hdr->sh_name]);
     return true;
 
   case SHT_PROGBITS:
     if (p)
     {
-      printf("SHT_PROGBITS %s\n", &shstr[hdr->sh_name]);
+      printf("SHT_PROGBITS %s\r\n", &shstr[hdr->sh_name]);
       print_section_progbits(hdr);
     }
     return true;
@@ -153,7 +153,7 @@ bool check_section(bool p, const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr)
   case SHT_SYMTAB:
     if (p)
     {
-      printf("SHT_SYMTAB %s\n", &shstr[hdr->sh_name]);
+      printf("SHT_SYMTAB %s\r\n", &shstr[hdr->sh_name]);
       print_section_symtab(hdr, e_hdr);
     }
     return true;
@@ -165,8 +165,7 @@ bool check_section(bool p, const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr)
 
 void print_prog_hdr(const Elf64_Phdr *hdr)
 {
-  bool ret_code = true;
-  printf("==== PROGRAM HEADER ====\n");
+  printf("==== PROGRAM HEADER ====\r\n");
   switch (hdr->p_type)
   {
   case PT_NULL:
@@ -178,9 +177,12 @@ void print_prog_hdr(const Elf64_Phdr *hdr)
   case PT_PHDR:
     printf("PT_PHDR ");
     break;
+  case PT_GNU_RELRO:
+    printf("PT_GNU_RELRO ");
+    break;
   default:
-    printf("PT_UNKNOWN=%d ", hdr->p_type);
-    ret_code = false;
+    printf("PT_UNKNOWN=%llx ", hdr->p_type);
+    // break;
   }
   if (hdr->p_flags & 0x1)
   {
@@ -194,9 +196,9 @@ void print_prog_hdr(const Elf64_Phdr *hdr)
   {
     printf("R");
   }
-  printf("\n");
-  printf("p_offset 0x%llx\n", hdr->p_offset);
-  printf("p_vaddr/p_paddr 0x%llx/0x%llx\n", hdr->p_vaddr, hdr->p_paddr);
-  printf("p_filesz/p_memsz 0x%llx/0x%llx\n", hdr->p_filesz, hdr->p_memsz);
-  printf("p_align 0x%llx\n", hdr->p_align);
+  printf("\r\n");
+  printf("p_offset 0x%llx\r\n", hdr->p_offset);
+  printf("p_vaddr/p_paddr 0x%llx/0x%llx\r\n", hdr->p_vaddr, hdr->p_paddr);
+  printf("p_filesz/p_memsz 0x%llx/0x%llx\r\n", hdr->p_filesz, hdr->p_memsz);
+  printf("p_align 0x%llx\r\n", hdr->p_align);
 }

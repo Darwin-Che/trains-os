@@ -12,6 +12,8 @@
 #include "interrupt.h"
 #include "lib/include/dashboard.h"
 #include "pgmgr.h"
+#include "lib/include/macro.h"
+#include "sys_val.h"
 
 void k_create_handler(int priority, void (*func)())
 {
@@ -187,6 +189,16 @@ void k_await_event_handler(enum keIntrId evt)
 
   k_sched_add_event_wait(&kg_gs->scheduler, kg_current_td, evt);
   kg_current_td = NULL;
+}
+
+void k_mmap_handler(void **target, uint64_t mem_sz)
+{
+  mem_sz = NEXT_POW2(mem_sz);
+  DEBUG_PRINT("k_mmap mem_sz = %x\r\n", mem_sz);
+  uint8_t mem_sz_sft = MSB_POS(mem_sz);
+  DEBUG_PRINT("k_mmap mem_sz_sft = %x\r\n", mem_sz_sft);
+  *target = pg_alloc_page(SYSADDR.pgmgr, mem_sz_sft, 0);
+  kg_current_td->syscall_retval = 0;
 }
 
 void k_sys_health(struct keSysHealth *health)

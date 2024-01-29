@@ -22,7 +22,10 @@
 
 #pragma GCC diagnostic pop
 
-#define __always_inline inline __attribute__((always_inline))
+// #ifdef __always_inline
+  #undef __always_inline
+  #define __always_inline inline __attribute__((always_inline))
+// #endif
 
 struct rb_node
 {

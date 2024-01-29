@@ -9,6 +9,7 @@
 #include "debug_print.h"
 #include "pgmgr.h"
 #include "sys_val.h"
+#include "bootstrap.h"
 #include "loader/include/loader.h"
 
 extern void exception_vector_setup();

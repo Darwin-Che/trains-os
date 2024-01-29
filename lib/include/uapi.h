@@ -138,4 +138,11 @@ struct keSysHealth
 
 extern int ke_sys_health(struct keSysHealth *h);
 
+/*
+Request memory pages
+mem_sz is just a number (internally we will cast it up to closest power of 2 and alloc that amount, alignment is also at that number)
+When alloc failed, return NULL
+*/
+extern int ke_mmap(void **target, uint64_t mem_sz);
+
 #endif

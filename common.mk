@@ -1,18 +1,15 @@
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 
-include $(SELF_DIR)/../xdir.mk
-
 ARCH=cortex-a72
 TRIPLE=aarch64-none-elf
-XBINDIR:=$(XDIR)/bin
-CC:=$(XBINDIR)/$(TRIPLE)-gcc
-OBJSIZE:=$(XBINDIR)/$(TRIPLE)-size
-OBJCOPY:=$(XBINDIR)/$(TRIPLE)-objcopy
-OBJDUMP:=$(XBINDIR)/$(TRIPLE)-objdump
-READELF:=$(XBINDIR)/$(TRIPLE)-readelf
-STRIP:=$(XBINDIR)/$(TRIPLE)-strip
-AR:=$(XBINDIR)/$(TRIPLE)-ar
-RANLIB:=$(XBINDIR)/$(TRIPLE)-ranlib
+CC:=$(TRIPLE)-gcc
+OBJSIZE:=$(TRIPLE)-size
+OBJCOPY:=$(TRIPLE)-objcopy
+OBJDUMP:=$(TRIPLE)-objdump
+READELF:=$(TRIPLE)-readelf
+STRIP:=$(TRIPLE)-strip
+AR:=$(TRIPLE)-ar
+RANLIB:=$(TRIPLE)-ranlib
 
 # COMPILE OPTIONS
 WARNINGS=-Wall -Wextra -Wpedantic -Wno-unused-const-variable

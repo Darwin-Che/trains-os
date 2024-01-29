@@ -4,18 +4,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "macro.h"
 
-#define MSB_POS(x)                                                             \
-  __extension__({                                                              \
-    uint8_t pos = sizeof(x) * 8 - 1;                                           \
-    for (; pos > 0; pos -= 1) {                                                \
-      if (x & (1 << pos))                                                      \
-        break;                                                                 \
-    }                                                                          \
-    pos;                                                                       \
-  })
-
-struct SlabMeta {
+struct SlabMeta
+{
   // In order to prevent cache imbalance, try to make obj_size
   //  - Conform to obj_align
   //  - If possible, not a multiple of 32 Bytes (Minimum cache line size)
@@ -28,7 +20,8 @@ struct SlabMeta {
   Represents one slab, corresponding to a page (different sizes might exist)
   Belongs to a SlabAlloc
 */
-struct Slab {
+struct Slab
+{
   uint8_t magic[4];
   void *data;
   struct SlabAlloc *alloc;
@@ -46,7 +39,8 @@ struct Slab {
 */
 #define SLAB_OBJ_N_MAX 256
 #define SLAB_END_PADDING_MIN 64
-struct SlabAlloc {
+struct SlabAlloc
+{
   uint32_t obj_sz;      // The size of the object, if the
   uint32_t pg_sft;      // The page size of the slabs
   uint16_t obj_n;       // the number of objects in the slab, the MAX is 256
@@ -69,7 +63,8 @@ struct SlabAlloc {
   Manages the slabs, mainly used for bookkeeping
 */
 #define SLABMGR_CAP 64
-struct SlabMgr {
+struct SlabMgr
+{
   struct SlabAlloc slab_alloc[SLABMGR_CAP];
   uint32_t slab_alloc_n;
 };

@@ -66,6 +66,7 @@ typedef struct
 #define PT_NOTE 4
 #define PT_SHLIB 5
 #define PT_PHDR 6
+#define PT_GNU_RELRO 0x6474E552
 
 typedef struct
 {
