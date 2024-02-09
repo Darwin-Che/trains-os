@@ -227,6 +227,18 @@ void k_uart_read_reg(int channel, char reg)
   kg_current_td->syscall_retval = data;
 }
 
+void k_print_raw(const char * msg)
+{
+  if (msg == NULL)
+    printf("ke_print_raw\r\n");
+  else
+    printf("ke_print_raw %s\r\n", msg);
+
+  for (int i = 0; i <= 65535; i += 1)
+    asm volatile("yield");
+  kg_current_td->syscall_retval = 0;
+}
+
 extern void el1_reboot();
 void k_quit()
 {

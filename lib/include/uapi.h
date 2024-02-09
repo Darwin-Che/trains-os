@@ -127,6 +127,11 @@ Non-blocking for terminal
 extern int ke_puts(int tid, int channel, const char *str, int len);
 
 /*
+Debug Print
+*/
+extern int ke_print_raw(const char * msg);
+
+/*
 Reboot
 */
 extern void ke_quit();

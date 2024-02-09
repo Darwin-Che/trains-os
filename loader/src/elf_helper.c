@@ -154,7 +154,7 @@ bool check_section(bool p, const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr)
     if (p)
     {
       printf("SHT_SYMTAB %s\r\n", &shstr[hdr->sh_name]);
-      print_section_symtab(hdr, e_hdr);
+      // print_section_symtab(hdr, e_hdr);
     }
     return true;
 

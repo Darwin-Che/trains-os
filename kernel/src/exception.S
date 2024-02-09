@@ -102,6 +102,7 @@ handler_func_tabl:
   b k_sys_health
   b k_uart_write_reg
   b k_uart_read_reg
+  b k_print_raw
   b k_quit
 
 

@@ -4,13 +4,13 @@
 
 #define MSB_POS(x)                   \
   __extension__({                    \
-    uint8_t pos = sizeof(x) * 8 - 1; \
-    for (; pos > 0; pos -= 1)        \
+    int8_t pos = sizeof(x) * 8 - 1;  \
+    for (; pos >= 0; pos -= 1)       \
     {                                \
-      if (x & ((typeof(x))1 << pos)) \
+      if (x >> pos)                  \
         break;                       \
     }                                \
-    pos;                             \
+    (uint8_t) pos;                   \
   })
 
 #define ALIGN_UP(val, sft) \

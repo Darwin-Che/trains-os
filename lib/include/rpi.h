@@ -106,3 +106,5 @@ bool uart_read_is_blocked(size_t spiChannel, size_t uartChannel);
 
 void uart_write_register(size_t spiChannel, size_t uartChannel, char reg, char data);
 char uart_read_register(size_t spiChannel, size_t uartChannel, char reg);
+
+void uart_test();
