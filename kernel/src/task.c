@@ -4,7 +4,7 @@
 #include "lib/include/util.h"
 #include "global_state.h"
 #include "debug_print.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "lib/include/hashtable.h"
 #include "pgmgr.h"
 #include "sys_val.h"
@@ -73,31 +73,47 @@ void k_tmgr_destroy_task(struct kTaskDspMgr *mgr, struct kTaskDsp *td)
   slab_free(mgr->task_alloc, td);
 }
 
-void k_td_init_user_task_default_wrapper(void (*user_func_addr)())
-{
-  DEBUG_PRINT("User Task Wrapper Started\r\n");
-  user_func_addr();
-  ke_exit();
-}
+// void k_td_init_user_task_default_wrapper(void (*user_func_addr)())
+// {
+//   DEBUG_PRINT("User Task Wrapper Started\r\n");
+//   user_func_addr();
+//   ke_exit();
+// }
 
-void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td, uint64_t priority, void (*user_func_addr)())
+void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td, uint64_t priority,
+                         void (*user_func_addr)(), uint64_t arg, const char *data, uint64_t data_len)
 {
-  td->syscall_retval = (uint64_t)user_func_addr; // This gets extracted into x0, which will be treated as argument as well.
-  td->pc = (uint64_t)k_td_init_user_task_default_wrapper;
-  td->esr_el1 = 1; // as long as it is not 0
+  td->pc = (uint64_t)user_func_addr;
   td->pstate = 0;
   td->priority_key.priority = priority;
-
-  td->sp = td->stack_addr + (uintptr_t)td->stack_sz;
-
-  // simulate the reg_store when the user traps into the kernel
-  struct kRegStore *user_reg_store = (struct kRegStore *)(td->sp - sizeof(struct kRegStore));
-  util_memset(user_reg_store, 0x5A, sizeof(struct kRegStore)); // DEBUG
-  td->sp = (uint64_t)user_reg_store;
-
   td->parent_tid = parent_td->tid;
+
   // when we create a task, is it always in the ready state?
   td->state = READY;
+
+  // simulate the reg_store when the user had an interrupt (saves x0 in syscall_retval, x1-x31 on stack)
+  td->esr_el1 = 0; // interrupt indicator
+  td->sp = td->stack_addr + (uintptr_t)td->stack_sz;
+  td->syscall_retval = arg; // This gets extracted into x0, which will be treated as argument 1 to user_func_addr.
+
+  // copy the data on stack before the registers
+  if (data_len != 0)
+  {
+    uint64_t alloc_len = (data_len & ~0xF) + ((data_len & 0xF) ? 0x10 : 0x0); // stack pointer must align at 16 bytes for aarch64
+    td->sp -= alloc_len;
+    util_memcpy((void *)td->sp, data, data_len);
+  }
+
+  // simulate the reg_store at the top of the stack
+  struct kRegStore *user_reg_store = (struct kRegStore *)(td->sp - sizeof(struct kRegStore));
+  util_memset(user_reg_store, 0x5A, sizeof(struct kRegStore)); // DEBUG
+
+  // pass the data
+  user_reg_store->x01 = td->sp;
+  user_reg_store->x02 = data_len;
+  user_reg_store->x30 = (uint64_t)ke_exit; // Always ends the process with ke_exit
+
+  td->sp = (uint64_t)user_reg_store;
 
   k_mbox_init(&td->mailbox);
 }

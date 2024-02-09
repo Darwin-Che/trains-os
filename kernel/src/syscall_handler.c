@@ -6,12 +6,14 @@
 #include "mailbox.h"
 #include "lib/include/rpi.h"
 #include "debug_print.h"
-#include "kernel/uapi.h"
+#include "lib/include/uapi.h"
 #include "lib/include/timer.h"
 #include "lib/include/util.h"
 #include "interrupt.h"
 #include "lib/include/dashboard.h"
 #include "pgmgr.h"
+#include "lib/include/macro.h"
+#include "sys_val.h"
 
 void k_create_handler(int priority, void (*func)())
 {
@@ -29,7 +31,7 @@ void k_create_handler(int priority, void (*func)())
     kg_current_td->syscall_retval = -1;
     return;
   }
-  k_td_init_user_task(td, parent_td, priority, func);
+  k_td_init_user_task(td, parent_td, priority, func, 0, NULL, 0);
   k_sched_add_ready(&kg_gs->scheduler, td);
   kg_current_td->syscall_retval = td->tid;
 }
@@ -189,6 +191,16 @@ void k_await_event_handler(enum keIntrId evt)
   kg_current_td = NULL;
 }
 
+void k_mmap_handler(void **target, uint64_t mem_sz)
+{
+  mem_sz = NEXT_POW2(mem_sz);
+  DEBUG_PRINT("k_mmap mem_sz = %x\r\n", mem_sz);
+  uint8_t mem_sz_sft = MSB_POS(mem_sz);
+  DEBUG_PRINT("k_mmap mem_sz_sft = %x\r\n", mem_sz_sft);
+  *target = pg_alloc_page(SYSADDR.pgmgr, mem_sz_sft, 0);
+  kg_current_td->syscall_retval = 0;
+}
+
 void k_sys_health(struct keSysHealth *health)
 {
   DEBUG_PRINT("\r\n");
@@ -213,6 +225,18 @@ void k_uart_read_reg(int channel, char reg)
   char data = uart_read_register(0, channel, reg);
   DEBUG_PRINT("\r\n");
   kg_current_td->syscall_retval = data;
+}
+
+void k_print_raw(const char * msg)
+{
+  if (msg == NULL)
+    printf("ke_print_raw\r\n");
+  else
+    printf("ke_print_raw %s\r\n", msg);
+
+  for (int i = 0; i <= 65535; i += 1)
+    asm volatile("yield");
+  kg_current_td->syscall_retval = 0;
 }
 
 extern void el1_reboot();

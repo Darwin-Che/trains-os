@@ -1,9 +1,9 @@
 #ifndef U_UART_PRIV_H
 #define U_UART_PRIV_H
 
-#include "kernel/uapi.h"
 #include "lib/include/ring_buffer.h"
 #include "lib/include/rpi.h"
+#include "lib/include/uapi.h"
 #include "msg/msg.h"
 
 #define INPUT_QUEUE_CAP 64

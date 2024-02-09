@@ -314,3 +314,9 @@ void uart_puts_ntm(size_t spiChannel, size_t uartChannel, const char *buf)
     }
   }
 }
+
+// Debug Test
+void uart_test()
+{
+  uart_puts_ntm(0, 0, "UART TEST!!!\r\n");
+}

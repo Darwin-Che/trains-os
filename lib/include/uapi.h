@@ -127,6 +127,11 @@ Non-blocking for terminal
 extern int ke_puts(int tid, int channel, const char *str, int len);
 
 /*
+Debug Print
+*/
+extern int ke_print_raw(const char * msg);
+
+/*
 Reboot
 */
 extern void ke_quit();
@@ -137,5 +142,12 @@ struct keSysHealth
 };
 
 extern int ke_sys_health(struct keSysHealth *h);
+
+/*
+Request memory pages
+mem_sz is just a number (internally we will cast it up to closest power of 2 and alloc that amount, alignment is also at that number)
+When alloc failed, return NULL
+*/
+extern int ke_mmap(void **target, uint64_t mem_sz);
 
 #endif

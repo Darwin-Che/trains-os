@@ -5,10 +5,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
-#define ALIGN_UP(val, sft) \
-  (((val) + (1 << (sft)) - 1) & ~((typeof((val)))(1 << (sft)) - 1))
-#define ALIGN_DOWN(val, sft) ((val) & ~((1 << sft) - 1))
+#include "lib/include/macro.h"
 
 #define CACHE_LINE_SFT 6
 #define CACHE_LINE_SZ (1 << CACHE_LINE_SFT)
