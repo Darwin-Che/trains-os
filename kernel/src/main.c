@@ -32,6 +32,15 @@ int k_main()
   init_spi(0);
   init_uart(0);
 
+  uart_init(2, 115200);
+
+  while (1) {
+    spi_uart_putc(0, 0, 'X');
+    uart_putc(2, 'Y');
+    for (int i = 0; i < 65535; i += 1)
+      asm volatile("nop");
+  }
+
   exception_vector_setup();
 
   struct kGlobalState gs;
@@ -39,14 +48,14 @@ int k_main()
 
 #ifdef DEBUG
   k_page_table_print_all();
-  uart_getc(0, 0);
+  uart_getc(0);
 #endif
 
   printf("This is trains-os (" __TIME__ ")\r\n");
-  uart_getc(0, 0);
+  uart_getc(0);
 
   printf("Enable MMU? y/n\r\n");
-  char c = uart_getc(0, 0);
+  char c = uart_getc(0);
   if (c == 'y')
   {
     turn_on_mmu();

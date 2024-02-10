@@ -127,11 +127,5 @@ int k_td_get_syscall_no(struct kTaskDsp *kd)
 
 void k_td_print(struct kTaskDsp *kc)
 {
-  char msg1[] = "Print kTaskDsp\r\n";
-  uart_puts(0, 0, msg1, sizeof(msg1) - 1);
-  uart_getc(0, 0);
-  uart_puts(0, 0, print_reg(kc->pc), 18);
-  uart_puts(0, 0, "\r\n", 2);
-  uart_puts(0, 0, print_reg(kc->sp), 18);
-  uart_puts(0, 0, "\r\n", 2);
+  printf("Print kTaskDsp\r\npc=%x\r\nsp=%s\r\n", kc->pc, kc->sp);
 }

@@ -87,14 +87,14 @@ static inline int k_intr_wakeup_tasks(enum keIntrId intr_id)
     }
   }
 
-  if (intr_id == KE_INTR_MARKLIN_CTS)
-    ASSERT_MSG(number_of_events_triggered <= 1,
-               "Unexpected number of events triggered: %llu for eventid: %llu",
-               number_of_events_triggered, intr_id);
-  else
-    ASSERT_MSG(number_of_events_triggered == 1,
-               "Unexpected number of events triggered: %llu for eventid: %llu",
-               number_of_events_triggered, intr_id);
+  // if (intr_id == KE_INTR_MARKLIN_CTS)
+  //   ASSERT_MSG(number_of_events_triggered <= 1,
+  //              "Unexpected number of events triggered: %llu for eventid: %llu",
+  //              number_of_events_triggered, intr_id);
+  // else
+  //   ASSERT_MSG(number_of_events_triggered == 1,
+  //              "Unexpected number of events triggered: %llu for eventid: %llu",
+  //              number_of_events_triggered, intr_id);
   return number_of_events_triggered;
 }
 
@@ -109,130 +109,130 @@ static inline void process_intr_timer()
   k_intr_wakeup_tasks(KE_INTR_TIMER);
 }
 
-static inline bool process_iir_val(enum UartChnlId channel, int iir_val)
-{
-  DEBUG_PRINT("Channel: %d\r\n", channel);
+// static inline bool process_iir_val(enum UartChnlId channel, int iir_val)
+// {
+//   DEBUG_PRINT("Channel: %d\r\n", channel);
 
-  if ((iir_val & 0x1) != 0)
-  {
-    DEBUG_PRINT("No interrupt pending, val: %d\r\n", iir_val);
-    return false;
-  }
+//   if ((iir_val & 0x1) != 0)
+//   {
+//     DEBUG_PRINT("No interrupt pending, val: %d\r\n", iir_val);
+//     return false;
+//   }
 
-  int iir_code = ((iir_val >> 1) & 0x1F); // get bits 5:1
+//   int iir_code = ((iir_val >> 1) & 0x1F); // get bits 5:1
 
-  switch (iir_code)
-  {
-  case UART_IIR_RECV_TIMEOUT:
-    DEBUG_PRINT("Receive timeout status interrupt \r\n");
-    // fall through
-  case UART_IIR_RHR:
-    DEBUG_PRINT("RHR interrupt \r\n");
-    {
-      k_intr_uart_unarm(channel, UART_IER_RHR);
+//   switch (iir_code)
+//   {
+//   case UART_IIR_RECV_TIMEOUT:
+//     DEBUG_PRINT("Receive timeout status interrupt \r\n");
+//     // fall through
+//   case UART_IIR_RHR:
+//     DEBUG_PRINT("RHR interrupt \r\n");
+//     {
+//       k_intr_uart_unarm(channel, UART_IER_RHR);
 
-      if (channel == TERM_CHANNEL)
-        k_intr_wakeup_tasks(KE_INTR_TERM_INPUT);
-      else if (channel == MARKLIN_CHANNEL)
-        k_intr_wakeup_tasks(KE_INTR_MARKLIN_INPUT);
-      else
-        ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
+//       if (channel == TERM_CHANNEL)
+//         k_intr_wakeup_tasks(KE_INTR_TERM_INPUT);
+//       else if (channel == MARKLIN_CHANNEL)
+//         k_intr_wakeup_tasks(KE_INTR_MARKLIN_INPUT);
+//       else
+//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
 
-      return true;
-    }
+//       return true;
+//     }
 
-  case UART_IIR_THR:
-    DEBUG_PRINT("THR interrupt \r\n");
-    {
-      k_intr_uart_unarm(channel, UART_IER_THR);
+//   case UART_IIR_THR:
+//     DEBUG_PRINT("THR interrupt \r\n");
+//     {
+//       k_intr_uart_unarm(channel, UART_IER_THR);
 
-      if (channel == TERM_CHANNEL)
-        k_intr_wakeup_tasks(KE_INTR_TERM_OUTPUT);
-      else if (channel == MARKLIN_CHANNEL)
-        k_intr_wakeup_tasks(KE_INTR_MARKLIN_OUTPUT);
-      else
-        ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
+//       if (channel == TERM_CHANNEL)
+//         k_intr_wakeup_tasks(KE_INTR_TERM_OUTPUT);
+//       else if (channel == MARKLIN_CHANNEL)
+//         k_intr_wakeup_tasks(KE_INTR_MARKLIN_OUTPUT);
+//       else
+//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
 
-      return true;
-    }
+//       return true;
+//     }
 
-  case UART_IIR_CTS_RTS_CHANGE:
-    DEBUG_PRINT("CTS/RTS state change\r\n");
-    {
-      k_intr_uart_unarm(channel, UART_IER_CTS);
+//   case UART_IIR_CTS_RTS_CHANGE:
+//     DEBUG_PRINT("CTS/RTS state change\r\n");
+//     {
+//       k_intr_uart_unarm(channel, UART_IER_CTS);
 
-      if (channel == TERM_CHANNEL)
-      {
-        ASSERT_MSG(false, "Receive CTS on Term Channel!\r\n");
-      }
-      else if (channel == MARKLIN_CHANNEL)
-        k_intr_wakeup_tasks(KE_INTR_MARKLIN_CTS);
-      else
-        ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
+//       if (channel == TERM_CHANNEL)
+//       {
+//         ASSERT_MSG(false, "Receive CTS on Term Channel!\r\n");
+//       }
+//       else if (channel == MARKLIN_CHANNEL)
+//         k_intr_wakeup_tasks(KE_INTR_MARKLIN_CTS);
+//       else
+//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
 
-      return true;
-    }
+//       return true;
+//     }
 
-  case UART_IIR_MODEM:
-    DEBUG_PRINT("Modem interrupt \r\n");
-    {
-      if (channel == TERM_CHANNEL)
-      {
-        ASSERT_MSG(false, "Receive Modem on Term Channel!\r\n");
-      }
-      else if (channel == MARKLIN_CHANNEL)
-      {
-        char msr = uart_read_register(0, MARKLIN_CHANNEL, UART_MSR);
-        DEBUG_PRINT("Modem On Marklin! %X\r\n", msr);
-        if (msr & 0x1)
-          k_intr_wakeup_tasks(KE_INTR_MARKLIN_CTS);
-        k_intr_uart_unarm(channel, UART_IER_MODEM);
-      }
-      else
-        ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
-      return true;
-    }
+//   case UART_IIR_MODEM:
+//     DEBUG_PRINT("Modem interrupt \r\n");
+//     {
+//       if (channel == TERM_CHANNEL)
+//       {
+//         ASSERT_MSG(false, "Receive Modem on Term Channel!\r\n");
+//       }
+//       else if (channel == MARKLIN_CHANNEL)
+//       {
+//         char msr = uart_read_register(0, MARKLIN_CHANNEL, UART_MSR);
+//         DEBUG_PRINT("Modem On Marklin! %X\r\n", msr);
+//         if (msr & 0x1)
+//           k_intr_wakeup_tasks(KE_INTR_MARKLIN_CTS);
+//         k_intr_uart_unarm(channel, UART_IER_MODEM);
+//       }
+//       else
+//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
+//       return true;
+//     }
 
-    /* **************** BELOW ARE DEFENSIVE BRANCHES **************** */
+//     /* **************** BELOW ARE DEFENSIVE BRANCHES **************** */
 
-  case UART_IIR_RECV_LINE_STATUS:
-    DEBUG_PRINT("Receive line status interrupt \r\n");
-    assert_fail();
-    break;
-  case UART_IIR_INPUT_PIN_STATE_CHANGE:
-    DEBUG_PRINT("Input pin state change \r\n");
-    assert_fail();
-    break;
-  case UART_IIR_XOFF_SIGNAL:
-    DEBUG_PRINT("Xoff Signal \r\n");
-    assert_fail();
-    break;
-  default:
-    DEBUG_PRINT("Unknown iir value: %d", iir_val);
-    printf("Unknown iir value: %d", iir_val);
-    assert_fail();
-    break;
-  }
-  return false;
-}
+//   case UART_IIR_RECV_LINE_STATUS:
+//     DEBUG_PRINT("Receive line status interrupt \r\n");
+//     assert_fail();
+//     break;
+//   case UART_IIR_INPUT_PIN_STATE_CHANGE:
+//     DEBUG_PRINT("Input pin state change \r\n");
+//     assert_fail();
+//     break;
+//   case UART_IIR_XOFF_SIGNAL:
+//     DEBUG_PRINT("Xoff Signal \r\n");
+//     assert_fail();
+//     break;
+//   default:
+//     DEBUG_PRINT("Unknown iir value: %d", iir_val);
+//     printf("Unknown iir value: %d", iir_val);
+//     assert_fail();
+//     break;
+//   }
+//   return false;
+// }
 
-static inline void process_intr_uart(char iir_term, char iir_marklin)
-{
-  DEBUG_PRINT("Kernel Process Uart Interrupt\r\n");
-  bool processed = false;
+// static inline void process_intr_uart(char iir_term, char iir_marklin)
+// {
+//   DEBUG_PRINT("Kernel Process Uart Interrupt\r\n");
+//   bool processed = false;
 
-  // Check if interrupt happened in terminal
-  processed = process_iir_val(TERM_CHANNEL, iir_term) || processed;
+//   // Check if interrupt happened in terminal
+//   processed = process_iir_val(TERM_CHANNEL, iir_term) || processed;
 
-  // Check if interrupt happened in marklin
-  processed = process_iir_val(MARKLIN_CHANNEL, iir_marklin) || processed;
+//   // Check if interrupt happened in marklin
+//   processed = process_iir_val(MARKLIN_CHANNEL, iir_marklin) || processed;
 
-  if (!processed)
-  {
-    DEBUG_PRINT("SPURIOUS UART Interrupt!!\r\n");
-    // assert_fail();
-  }
-}
+//   if (!processed)
+//   {
+//     DEBUG_PRINT("SPURIOUS UART Interrupt!!\r\n");
+//     // assert_fail();
+//   }
+// }
 
 void k_intr_handler()
 {
@@ -245,16 +245,16 @@ void k_intr_handler()
       // Process the timer & turn off interrupt
       process_intr_timer();
     }
-    else if (id == GIC_INTR_ID_GPIO_0)
-    {
-      // Must read IIR before debug prints
-      char iir_term = uart_read_register(0, TERM_CHANNEL, UART_IIR);
-      char iir_marklin = uart_read_register(0, MARKLIN_CHANNEL, UART_IIR);
+    // else if (id == GIC_INTR_ID_GPIO_0)
+    // {
+    //   // Must read IIR before debug prints
+    //   char iir_term = uart_read_register(0, TERM_CHANNEL, UART_IIR);
+    //   char iir_marklin = uart_read_register(0, MARKLIN_CHANNEL, UART_IIR);
 
-      DEBUG_PRINT("Got interrupt from UART!! \r\n");
-      // Process & turn off interrupt
-      process_intr_uart(iir_term, iir_marklin);
-    }
+    //   DEBUG_PRINT("Got interrupt from UART!! \r\n");
+    //   // Process & turn off interrupt
+    //   process_intr_uart(iir_term, iir_marklin);
+    // }
     else if (id == GIC_INTR_ID_NONE)
     {
       DEBUG_PRINT("Finish Kernel Interrupt Handling Loop\r\n");
