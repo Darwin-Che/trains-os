@@ -1,4 +1,5 @@
 #include "loader_priv.h"
+#include "loader_args.h"
 #include "lib/include/printf.h"
 #include "lib/include/macro.h"
 #include "lib/include/uapi.h"
@@ -9,8 +10,15 @@ typedef void (*EntryFunc)(uint64_t);
 void calc_mem_size(const Elf64_Phdr *p_hdr_start, uint16_t hdr_cnt, uint64_t *vaddr_base, uint64_t *mem_sz);
 void memcpy_prog_hdr(const Elf64_Phdr *p_hdr, const char *elf_start, uint64_t vaddr_diff);
 
-void load_elf(const char *elf_start)
+void load_elf(const char *args, uint64_t args_len)
 {
+  for (int i = 0; i < args_len; i += 1) {
+    printf("%c", args[i]);
+  }
+  printf("\r\nargs_len = %d\r\n", args_len);
+
+  struct LoaderArgs loader_args = resolve_args(args, args_len);
+  const char * elf_start = loader_args.elf_start;
   bool p = true;
 
   printf("elf_start = %p\r\n", elf_start);
@@ -71,8 +79,6 @@ void load_elf(const char *elf_start)
   printf("%x\r\n", peek_data[3]);
   printf("%x\r\n", peek_data[4]);
   printf("%x\r\n", peek_data[5]);
-
-  ke_print_raw(NULL);
 
   entry_func(0);
 }

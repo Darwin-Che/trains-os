@@ -48,4 +48,5 @@ build/loader.o: lib
 	$(OBJDUMP) -d $@ > $(call dump_file,$@)
 
 pie-rust: lib
-	cd pie-rust && bash make_all.sh
+	$(MAKE) -C pie-rust
+	# cd pie-rust && bash make_all.sh

@@ -32,7 +32,7 @@ enum keIntrId
 
 extern void ke_exit();
 extern void ke_yield();
-extern int ke_create(int priority, void (*function)());
+extern int ke_create(int priority, void (*function)(), const char * args, uint64_t args_len);
 extern int ke_my_tid();
 extern int ke_my_parent_tid();
 
@@ -129,7 +129,7 @@ extern int ke_puts(int tid, int channel, const char *str, int len);
 /*
 Debug Print
 */
-extern int ke_print_raw(const char * msg);
+extern int ke_print_raw(const char * msg, int len);
 
 /*
 Reboot

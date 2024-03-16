@@ -24,14 +24,13 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start(x: i32) -> ! {
-    let msg = CStr::from_bytes_until_nul(b"RUST TASK!!!\r\n\0").unwrap();
+    let msg1 = CStr::from_bytes_until_nul(b"RUST TASK!!! Start\r\n\0").unwrap();
+    let msg2 = CStr::from_bytes_until_nul(b"RUST TASK!!! End\r\n\0").unwrap();
 
     unsafe {
-        ke_print_raw(msg.as_ptr());
+        ke_print_raw(msg1.as_ptr());
+        ke_print_raw(msg2.as_ptr());
     }
 
-    // unsafe {
-    //     uart_puts_ntm(0, 0, 0 as *const c_char);
-    // }
     loop {}
 }

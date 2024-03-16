@@ -1,3 +1,6 @@
+#ifndef L_LOADER_PRIV_H
+#define L_LOADER_PRIV_H
+
 #include "loader.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -89,3 +92,5 @@ typedef struct
 bool check_elf_hdr(bool p, const Elf64_Ehdr *hdr);
 bool check_section(bool p, const Elf64_Shdr *hdr, const Elf64_Ehdr *e_hdr);
 void print_prog_hdr(const Elf64_Phdr *hdr);
+
+#endif

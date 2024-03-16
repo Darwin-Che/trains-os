@@ -28,18 +28,7 @@ int k_main()
 {
   k_bootstrap_slab();
 
-  init_gpio();
-  init_spi(0);
-  init_uart(0);
-
-  uart_init(2, 115200);
-
-  while (1) {
-    spi_uart_putc(0, 0, 'X');
-    uart_putc(2, 'Y');
-    for (int i = 0; i < 65535; i += 1)
-      asm volatile("nop");
-  }
+  uart_init(0, 115200);
 
   exception_vector_setup();
 
@@ -68,7 +57,7 @@ int k_main()
 
   pgmgr_debug_print(SYSADDR.pgmgr, false);
 
-  printf("Kernel Start\r\n");
+  printf("Kernel Start - creating idle task\r\n");
 
   // setup idle_td
   struct kTaskDsp *idle_td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT);
@@ -78,17 +67,19 @@ int k_main()
     return 0;
   }
 
-  k_td_init_user_task(idle_td, NULL, K_SCHED_PRIO_MIN, idle_task, 0, NULL, 0);
+  k_td_init_user_task(idle_td, NULL, K_SCHED_PRIO_MIN, idle_task, NULL, 0);
   gs.task_mgr.idle_task = idle_td;
 
-  // Our first task
+  printf("Kernel Start - creating user_entry\r\n");
+
   struct kTaskDsp *td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT); // only tid is written
   if (td == NULL)
   {
     printf("Failed to create user_entry_td\r\n");
     return 0;
   }
-  k_td_init_user_task(td, NULL, K_SCHED_PRIO_MAX, load_elf, 0x4000000, NULL, 0); // init other fields
+  const char user_entry_task_args[] = "PROGRAM\0user_entry";
+  k_td_init_user_task(td, NULL, K_SCHED_PRIO_MAX, load_elf, user_entry_task_args, sizeof(user_entry_task_args)); // init other fields
   k_sched_add_ready(&gs.scheduler, td);
 
   k_gic_enable();
