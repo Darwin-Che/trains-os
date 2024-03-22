@@ -30,6 +30,15 @@ int k_main()
 
   uart_init(0, 115200);
 
+  uart_init(2, 115200);
+
+  while (1) {
+    spi_uart_putc(0, 0, 'X');
+    uart_putc(2, 'Y');
+    for (int i = 0; i < 65535; i += 1)
+      asm volatile("nop");
+  }
+
   exception_vector_setup();
 
   struct kGlobalState gs;
