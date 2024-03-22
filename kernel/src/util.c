@@ -1,22 +1,15 @@
 #include "util.h"
 #include "lib/include/rpi.h"
+#include "lib/include/printf.h"
 
 void print_debug(uint64_t reason)
 {
-  char msg1[] = "Register print\r\n";
-  uart_puts(0, 0, msg1, sizeof(msg1) - 1);
-  uart_puts(0, 0, print_reg(reason), 18);
-  uart_puts(0, 0, "\r\n", 2);
-  uart_getc(0, 0);
+  printf("Register print\r\nreason=%x\r\n", reason);
 }
 
 void print_debug_invalid_syscall(uint64_t reason)
 {
-  char msg1[] = "Invalid Syscall Print\r\n";
-  uart_puts(0, 0, msg1, sizeof(msg1) - 1);
-  uart_puts(0, 0, print_reg(reason), 18);
-  uart_puts(0, 0, "\r\n", 2);
-  uart_getc(0, 0);
+  printf("Invalid Syscall Print\r\nreason=%x\r\n", reason);
 }
 
 const char *print_reg(uint64_t v)

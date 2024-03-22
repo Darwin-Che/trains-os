@@ -27,16 +27,16 @@ enum kUartIER {
 void k_gic_enable();
 void k_intr_handler();
 
-static inline void k_intr_uart_arm(enum UartChnlId chnl, enum kUartIER ier) {
-  int uart_ier_value = uart_read_register(0, chnl, UART_IER);
-  uart_write_register(0, chnl, UART_IER, uart_ier_value | ier);
-}
+// static inline void k_intr_uart_arm(enum UartChnlId chnl, enum kUartIER ier) {
+//   int uart_ier_value = uart_read_register(0, chnl, UART_IER);
+//   uart_write_register(0, chnl, UART_IER, uart_ier_value | ier);
+// }
 
-static inline void k_intr_uart_unarm(enum UartChnlId chnl, enum kUartIER ier) {
-  int uart_ier_value = uart_read_register(0, chnl, UART_IER);
-  uart_write_register(0, chnl, UART_IER, uart_ier_value & ~(ier));
-  gpio->GPEDS0 |= (0x1 << 24);
-}
+// static inline void k_intr_uart_unarm(enum UartChnlId chnl, enum kUartIER ier) {
+//   int uart_ier_value = uart_read_register(0, chnl, UART_IER);
+//   uart_write_register(0, chnl, UART_IER, uart_ier_value & ~(ier));
+//   gpio->GPEDS0 |= (0x1 << 24);
+// }
 
 static inline void k_intr_timer_arm() {
   if (kg_gs->next_intr_time == 0) {

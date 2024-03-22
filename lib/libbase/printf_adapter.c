@@ -3,5 +3,5 @@
 
 void _putchar(char character)
 {
-  uart_putc(0, 0, character);
+  uart_putc(2, character);
 }

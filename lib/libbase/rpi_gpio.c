@@ -31,22 +31,7 @@ static char *const AUX_BASE = (char *)(GPIO_BASE + 0x15000);
 static volatile struct AUX *const aux = (struct AUX *)(AUX_BASE);
 static volatile struct SPI *const spi[] = {(struct SPI *)(AUX_BASE + 0x80), (struct SPI *)(AUX_BASE + 0xC0)};
 
-/*************** GPIO ***************/
-
-static const uint32_t GPIO_INPUT = 0x00;
-static const uint32_t GPIO_OUTPUT = 0x01;
-static const uint32_t GPIO_ALTFN0 = 0x04;
-static const uint32_t GPIO_ALTFN1 = 0x05;
-static const uint32_t GPIO_ALTFN2 = 0x06;
-static const uint32_t GPIO_ALTFN3 = 0x07;
-static const uint32_t GPIO_ALTFN4 = 0x03;
-static const uint32_t GPIO_ALTFN5 = 0x02;
-
-static const uint32_t GPIO_NONE = 0x00;
-static const uint32_t GPIO_PUP = 0x01;
-static const uint32_t GPIO_PDP = 0x02;
-
-static void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor)
+void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor)
 {
   uint32_t reg = pin / 10;
   uint32_t shift = (pin % 10) * 3;
@@ -162,7 +147,7 @@ static void spi_send_recv(uint32_t channel, const char *sendbuf, size_t sendlen,
   }
 }
 
-void uart_write_register(size_t spiChannel, size_t uartChannel, char reg, char data)
+void spi_uart_write_register(size_t spiChannel, size_t uartChannel, char reg, char data)
 {
   char req[2] = {0};
   req[0] = (uartChannel << UART_CHANNEL_SHIFT) | (reg << UART_ADDR_SHIFT);
@@ -170,7 +155,7 @@ void uart_write_register(size_t spiChannel, size_t uartChannel, char reg, char d
   spi_send_recv(spiChannel, req, 2, NULL, 0);
 }
 
-char uart_read_register(size_t spiChannel, size_t uartChannel, char reg)
+char spi_uart_read_register(size_t spiChannel, size_t uartChannel, char reg)
 {
   char req[2] = {0};
   char res[2] = {0};
@@ -179,33 +164,33 @@ char uart_read_register(size_t spiChannel, size_t uartChannel, char reg)
   return res[1];
 }
 
-static void uart_init_channel(size_t spiChannel, size_t uartChannel, size_t baudRate, bool twostopbit)
+static void spi_uart_init_channel(size_t spiChannel, size_t uartChannel, size_t baudRate, bool twostopbit)
 {
   // set baud rate
-  uart_write_register(spiChannel, uartChannel, UART_LCR, UART_LCR_DIV_LATCH_EN);
+  spi_uart_write_register(spiChannel, uartChannel, UART_LCR, UART_LCR_DIV_LATCH_EN);
   uint32_t bauddiv = 14745600 / (baudRate * 16);
-  uart_write_register(spiChannel, uartChannel, UART_DLH, (bauddiv & 0xFF00) >> 8);
-  uart_write_register(spiChannel, uartChannel, UART_DLL, (bauddiv & 0x00FF));
+  spi_uart_write_register(spiChannel, uartChannel, UART_DLH, (bauddiv & 0xFF00) >> 8);
+  spi_uart_write_register(spiChannel, uartChannel, UART_DLL, (bauddiv & 0x00FF));
 
   if (twostopbit)
   {
     // This is Marklin Box
-    uart_write_register(spiChannel, uartChannel, UART_LCR, 0xBF);
-    uart_write_register(spiChannel, uartChannel, UART_EFR, UART_EFR_ENABLE_ENHANCED_FNS);
-    uart_write_register(spiChannel, uartChannel, UART_LCR, 0x7);
-    uart_write_register(spiChannel, uartChannel, UART_FCR, UART_FCR_RX_FIFO_RESET | UART_FCR_TX_FIFO_RESET | UART_FCR_FIFO_EN);
-    // uart_write_register(spiChannel, uartChannel, UART_FCR, UART_FCR_RX_FIFO_RESET | UART_FCR_TX_FIFO_RESET);
+    spi_uart_write_register(spiChannel, uartChannel, UART_LCR, 0xBF);
+    spi_uart_write_register(spiChannel, uartChannel, UART_EFR, UART_EFR_ENABLE_ENHANCED_FNS);
+    spi_uart_write_register(spiChannel, uartChannel, UART_LCR, 0x7);
+    spi_uart_write_register(spiChannel, uartChannel, UART_FCR, UART_FCR_RX_FIFO_RESET | UART_FCR_TX_FIFO_RESET | UART_FCR_FIFO_EN);
+    // spi_uart_write_register(spiChannel, uartChannel, UART_FCR, UART_FCR_RX_FIFO_RESET | UART_FCR_TX_FIFO_RESET);
   }
   else
   {
     // This is Terminal
     // set serial byte configuration: 8 bit, no parity, 1 stop bit
-    uart_write_register(spiChannel, uartChannel, UART_LCR, 0x3);
-    uart_write_register(spiChannel, uartChannel, UART_FCR, UART_FCR_RX_FIFO_RESET | UART_FCR_TX_FIFO_RESET | UART_FCR_FIFO_EN);
+    spi_uart_write_register(spiChannel, uartChannel, UART_LCR, 0x3);
+    spi_uart_write_register(spiChannel, uartChannel, UART_FCR, UART_FCR_RX_FIFO_RESET | UART_FCR_TX_FIFO_RESET | UART_FCR_FIFO_EN);
   }
 
   // Initialize the registers
-  uart_write_register(spiChannel, uartChannel, UART_IER, 0); // Disable all interrupts
+  spi_uart_write_register(spiChannel, uartChannel, UART_IER, 0); // Disable all interrupts
 
   // clear and enable fifos, (wait since clearing fifos takes time)
   for (int i = 0; i < 65535; ++i)
@@ -214,52 +199,52 @@ static void uart_init_channel(size_t spiChannel, size_t uartChannel, size_t baud
 
 void init_uart(uint32_t spiChannel)
 {
-  uart_write_register(spiChannel, 0, UART_IOControl, UART_IOControl_RESET); // resets both channels
-  uart_init_channel(spiChannel, 0, 115200, false);
-  uart_init_channel(spiChannel, 1, 2400, true);
+  spi_uart_write_register(spiChannel, 0, UART_IOControl, UART_IOControl_RESET); // resets both channels
+  spi_uart_init_channel(spiChannel, 0, 115200, false);
+  spi_uart_init_channel(spiChannel, 1, 2400, true);
 }
 
-char uart_getc(size_t spiChannel, size_t uartChannel)
+char spi_uart_getc(size_t spiChannel, size_t uartChannel)
 {
-  while (uart_read_register(spiChannel, uartChannel, UART_RXLVL) == 0)
+  while (spi_uart_read_register(spiChannel, uartChannel, UART_RXLVL) == 0)
     asm volatile("yield");
-  return uart_read_register(spiChannel, uartChannel, UART_RHR);
+  return spi_uart_read_register(spiChannel, uartChannel, UART_RHR);
 }
 
-bool uart_getc_nonblock(size_t spiChannel, size_t uartChannel, char *c)
+bool spi_uart_getc_nonblock(size_t spiChannel, size_t uartChannel, char *c)
 {
-  if (uart_read_register(spiChannel, uartChannel, UART_RXLVL) == 0)
+  if (spi_uart_read_register(spiChannel, uartChannel, UART_RXLVL) == 0)
     return false;
-  *c = uart_read_register(spiChannel, uartChannel, UART_RHR);
+  *c = spi_uart_read_register(spiChannel, uartChannel, UART_RHR);
   return true;
 }
 
-void uart_putc(size_t spiChannel, size_t uartChannel, char c)
+void spi_uart_putc(size_t spiChannel, size_t uartChannel, char c)
 {
-  while (uart_read_register(spiChannel, uartChannel, UART_TXLVL) == 0)
+  while (spi_uart_read_register(spiChannel, uartChannel, UART_TXLVL) == 0)
     asm volatile("yield");
-  uart_write_register(spiChannel, uartChannel, UART_THR, c);
+  spi_uart_write_register(spiChannel, uartChannel, UART_THR, c);
 }
 
-bool uart_write_is_blocked(size_t spiChannel, size_t uartChannel)
+bool spi_uart_write_is_blocked(size_t spiChannel, size_t uartChannel)
 {
-  return uart_read_register(spiChannel, uartChannel, UART_TXLVL) == 0;
+  return spi_uart_read_register(spiChannel, uartChannel, UART_TXLVL) == 0;
 }
 
-bool uart_putc_nonblock(size_t spiChannel, size_t uartChannel, char c)
+bool spi_uart_putc_nonblock(size_t spiChannel, size_t uartChannel, char c)
 {
-  if (uart_read_register(spiChannel, uartChannel, UART_TXLVL) == 0)
+  if (spi_uart_read_register(spiChannel, uartChannel, UART_TXLVL) == 0)
     return false;
-  uart_write_register(spiChannel, uartChannel, UART_THR, c);
+  spi_uart_write_register(spiChannel, uartChannel, UART_THR, c);
   return true;
 }
 
-void uart_puts(size_t spiChannel, size_t uartChannel, const char *buf, size_t blen)
+void spi_uart_puts(size_t spiChannel, size_t uartChannel, const char *buf, size_t blen)
 {
   static const size_t max = 32;
   char temp[max];
   temp[0] = (uartChannel << UART_CHANNEL_SHIFT) | (UART_THR << UART_ADDR_SHIFT);
-  size_t tlen = uart_read_register(spiChannel, uartChannel, UART_TXLVL);
+  size_t tlen = spi_uart_read_register(spiChannel, uartChannel, UART_TXLVL);
   if (tlen > max)
     tlen = max;
   for (size_t bidx = 0, tidx = 1;;)
@@ -275,7 +260,7 @@ void uart_puts(size_t spiChannel, size_t uartChannel, const char *buf, size_t bl
       spi_send_recv(spiChannel, temp, tidx, NULL, 0);
       if (bidx == blen)
         break;
-      tlen = uart_read_register(spiChannel, uartChannel, UART_TXLVL);
+      tlen = spi_uart_read_register(spiChannel, uartChannel, UART_TXLVL);
       if (tlen > max)
         tlen = max;
       tidx = 1;
@@ -284,13 +269,13 @@ void uart_puts(size_t spiChannel, size_t uartChannel, const char *buf, size_t bl
 }
 
 // Expects a null terminated string only, will assert fail if over
-void uart_puts_ntm(size_t spiChannel, size_t uartChannel, const char *buf)
+void spi_uart_puts_ntm(size_t spiChannel, size_t uartChannel, const char *buf)
 {
   static const size_t max = 32;
 
   char temp[max];
   temp[0] = (uartChannel << UART_CHANNEL_SHIFT) | (UART_THR << UART_ADDR_SHIFT);
-  size_t tlen = uart_read_register(spiChannel, uartChannel, UART_TXLVL);
+  size_t tlen = spi_uart_read_register(spiChannel, uartChannel, UART_TXLVL);
   if (tlen > max)
     tlen = max;
   for (size_t bidx = 0, tidx = 1;;)
@@ -307,7 +292,7 @@ void uart_puts_ntm(size_t spiChannel, size_t uartChannel, const char *buf)
       spi_send_recv(spiChannel, temp, tidx, NULL, 0);
       if (tidx != tlen)
         break;
-      tlen = uart_read_register(spiChannel, uartChannel, UART_TXLVL);
+      tlen = spi_uart_read_register(spiChannel, uartChannel, UART_TXLVL);
       if (tlen > max)
         tlen = max;
       tidx = 1;
@@ -316,7 +301,7 @@ void uart_puts_ntm(size_t spiChannel, size_t uartChannel, const char *buf)
 }
 
 // Debug Test
-void uart_test()
+void spi_uart_test()
 {
-  uart_puts_ntm(0, 0, "UART TEST!!!\r\n");
+  spi_uart_puts_ntm(0, 0, "UART TEST!!!\r\n");
 }

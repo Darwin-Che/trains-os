@@ -10,7 +10,6 @@
 #include "lib/include/timer.h"
 #include "lib/include/util.h"
 #include "interrupt.h"
-#include "lib/include/dashboard.h"
 #include "pgmgr.h"
 #include "lib/include/macro.h"
 #include "sys_val.h"
@@ -161,26 +160,26 @@ void k_await_event_handler(enum keIntrId evt)
   {
     k_intr_timer_arm();
   }
-  else if (evt == KE_INTR_MARKLIN_INPUT)
-  {
-    k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_RHR);
-  }
-  else if (evt == KE_INTR_MARKLIN_OUTPUT)
-  {
-    k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_THR);
-  }
-  else if (evt == KE_INTR_MARKLIN_CTS)
-  {
-    k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_MODEM);
-  }
-  else if (evt == KE_INTR_TERM_INPUT)
-  {
-    k_intr_uart_arm(TERM_CHANNEL, UART_IER_RHR);
-  }
-  else if (evt == KE_INTR_TERM_OUTPUT)
-  {
-    k_intr_uart_arm(TERM_CHANNEL, UART_IER_THR);
-  }
+  // else if (evt == KE_INTR_MARKLIN_INPUT)
+  // {
+  //   k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_RHR);
+  // }
+  // else if (evt == KE_INTR_MARKLIN_OUTPUT)
+  // {
+  //   k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_THR);
+  // }
+  // else if (evt == KE_INTR_MARKLIN_CTS)
+  // {
+  //   k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_MODEM);
+  // }
+  // else if (evt == KE_INTR_TERM_INPUT)
+  // {
+  //   k_intr_uart_arm(TERM_CHANNEL, UART_IER_RHR);
+  // }
+  // else if (evt == KE_INTR_TERM_OUTPUT)
+  // {
+  //   k_intr_uart_arm(TERM_CHANNEL, UART_IER_THR);
+  // }
   else
   {
     kg_current_td->syscall_retval = -1;
@@ -215,16 +214,17 @@ void k_sys_health(struct keSysHealth *health)
 
 void k_uart_write_reg(int channel, char reg, char data)
 {
-  uart_write_register(0, channel, reg, data);
+  // uart_write_register(0, channel, reg, data);
   DEBUG_PRINT("\r\n");
   kg_current_td->syscall_retval = 0;
 }
 
 void k_uart_read_reg(int channel, char reg)
 {
-  char data = uart_read_register(0, channel, reg);
+  // char data = uart_read_register(0, channel, reg);
   DEBUG_PRINT("\r\n");
-  kg_current_td->syscall_retval = data;
+  // kg_current_td->syscall_retval = data;
+  kg_current_td->syscall_retval = 0;
 }
 
 void k_print_raw(const char * msg)
