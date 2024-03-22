@@ -3,10 +3,15 @@ build-std = ["core", "compiler_builtins"]
 build-std-features = ["compiler-builtins-mem"]
 
 [build]
-target = "rpi4b.json"
+target = "aarch64-unknown-linux-gnu"
 
-[target.rpi4b]
+[target.aarch64-unknown-linux-gnu]
+linker = "aarch64-none-elf-gcc"
 rustflags = [
-  "-C", "link-arg=-nostartfiles",
-  "-C", "link-arg=-static-pie",
+    "-C", "link-arg=-nostartfiles",
+    "-C", "target-cpu=cortex-a72",
+    "-C", "target-feature=+strict-align",
+    "-C", "target-feature=+v8a",
+    "-C", "target-feature=-neon",
+    "-C", "target-feature=-fp-armv8",
 ]

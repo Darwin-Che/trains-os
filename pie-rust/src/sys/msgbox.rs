@@ -1,50 +1,7 @@
 use core::marker::PhantomData;
 use core::{mem, slice};
-use msgbox_macro::{RecvEnumTrait, MsgTrait};
 use super::types::*;
 use core::ffi::{c_char, c_int};
-
-/* EXAMPLE
-
-#[repr(C)]
-#[derive(Debug, Default, MsgTrait)]
-struct UartPutsReq<'a> {
-    // Please use 'a for the lifetime if needed, MsgTrait relies on it
-    blocking: bool,
-    msg: AttachedArray<'a, u8>,
-}
-
-#[repr(C)]
-#[derive(Debug, Default, MsgTrait)]
-struct UartGetsReq {
-    blocking: bool,
-    msg_len: u32,
-}
-
-#[derive(Debug, RecvEnumTrait)]
-enum RecvEnum<'a> {
-    UartPutsReq(&'a UartPutsReq<'a>),
-    UartGetsReq(&'a UartGetsReq),
-}
-
-fn main() {
-    let mut send_buf: SendBox = SendBox::default();
-    {
-        let (mut send_box, mut uart_puts_req) = SendCtr::<UartPutsReq>::new(&mut send_buf.send_buf).unwrap();
-        uart_puts_req.msg = send_box.attach_array(5).unwrap();
-        uart_puts_req.msg.array.copy_from_slice("mPuts".as_bytes());
-    }
-
-    println!("send_buf\n{:?}", send_buf.send_buf);
-
-    let mut recv_box: RecvBox = RecvBox::new();
-    recv_box.recv_test(&send_buf.send_buf);
-    let d = RecvEnum::from_recv_bytes(&mut recv_box.recv_buf);
-
-    println!("{:?}", d);
-}
-
-*/
 
 /* MsgTrait */
 
@@ -146,9 +103,7 @@ impl<'a, T> SendCtr<'a, T> {
         Some((s, t))
     }
 
-    pub fn attach_array<I>(&'a mut self, cnt: u32) -> Option<AttachedArray<'a, I>> {
-        let cnt_usize = cnt as usize;
-
+    pub fn attach_array<I>(&'a mut self, cnt: usize) -> Option<AttachedArray<'a, I>> {
         let align = mem::align_of::<I>();
         let tsize = mem::size_of::<I>();
 
@@ -157,22 +112,22 @@ impl<'a, T> SendCtr<'a, T> {
         let padding_len = aligned_idx - *self.idx;
 
         // Check if there is enough space
-        if self.send_buf.len() < padding_len + cnt_usize * tsize {
+        if self.send_buf.len() < padding_len + cnt * tsize {
             return None;
         }
 
         // Split the buffer at new idx
-        *self.idx += padding_len + cnt_usize * tsize;
+        *self.idx += padding_len + cnt * tsize;
         let (_padding, send_buf_after_padding) = self.send_buf.split_at_mut(padding_len);
-        let (array, send_buf_after_array) = send_buf_after_padding.split_at_mut(cnt_usize * tsize);
+        let (array, send_buf_after_array) = send_buf_after_padding.split_at_mut(cnt * tsize);
         self.send_buf = send_buf_after_array;
 
         // Return the AttachedArray
         Some(AttachedArray {
-            idx: (*self.idx - cnt_usize * tsize) as u32,
-            cnt: cnt,
+            idx: (*self.idx - cnt * tsize) as u32,
+            cnt: cnt as u32,
             array: unsafe{ 
-                slice::from_raw_parts_mut(array.as_mut_ptr() as *mut I, cnt_usize)
+                slice::from_raw_parts_mut(array.as_mut_ptr() as *mut I, cnt)
             },
         })
     }
@@ -218,13 +173,15 @@ extern "C" {
     fn ke_send(tid: c_int, send_buf: *const c_char, send_buf_len: usize, reply_buf: *mut c_char, reply_buf_len: usize);
 }
 
-pub fn ker_recv<const R: usize>(tid: &mut Tid, recv_box: &mut RecvBox<R>) {
+pub fn ker_recv<const R: usize>(recv_box: &mut RecvBox<R>) -> Tid {
+    let tid: Tid = 0;
     unsafe {
         ke_recv(
             tid as *mut c_int,
             recv_box.recv_buf.as_mut_ptr() as *mut c_char,
             R
-        )
+        );
+        tid
     }
 }
 
@@ -234,7 +191,7 @@ pub fn ker_reply<const S: usize>(tid: Tid, send_box: &SendBox<S>) {
             tid as c_int,
             send_box.send_buf.as_ptr() as *const c_char,
             send_box.len
-        )
+        );
     }
 }
 
@@ -246,6 +203,6 @@ pub fn ker_send<const S: usize, const R: usize>(tid: Tid, send_box: &SendBox<S>,
             send_box.len,
             recv_box.recv_buf.as_mut_ptr() as *mut c_char,
             R
-        )
+        );
     }
 }

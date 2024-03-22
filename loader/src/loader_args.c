@@ -1,11 +1,19 @@
-#include "loader_args.h"
+#include "loader_priv.h"
 #include "lib/include/util.h"
 
 extern char user_entry_elf_start[];
+extern char msg_demo_elf_start[];
+extern char msg_demo_child_elf_start[];
 
 static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "user_entry")) {
     return user_entry_elf_start;
+  }
+  if (util_strcmp(program_name, "msg_demo")) {
+    return msg_demo_elf_start;
+  }
+  if (util_strcmp(program_name, "msg_demo_child")) {
+    return msg_demo_child_elf_start;
   }
   return NULL;
 }

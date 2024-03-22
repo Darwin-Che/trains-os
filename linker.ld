@@ -16,9 +16,6 @@ SECTIONS {
     KEEP("build/kernel.o"(.text.boot))
     build/kernel.o (.text*)
     build/loader.o (.text*)
-		/* KEEP("build/kernel.o"(.text.boot))
-    build/kernel.o (.text*)
-    build/user.o (.text*) */
 	}
 
   /* 2^20 = 1MB */
@@ -49,6 +46,18 @@ SECTIONS {
   PROVIDE(user_entry_elf_start = .);
   .user_entry_elf : {
     pie-rust/build/user_entry_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(msg_demo_elf_start = .);
+  .msg_demo_elf : {
+    pie-rust/build/msg_demo_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(msg_demo_child_elf_start = .);
+  .msg_demo_child_elf : {
+    pie-rust/build/msg_demo_child_elf.o (.*)
   }
 
   PROVIDE(LINKER_CODE_END = .);

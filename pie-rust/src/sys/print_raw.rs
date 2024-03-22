@@ -31,7 +31,6 @@ pub struct KerPrintRaw;
 
 impl fmt::Write for KerPrintRaw {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        ker_print_raw("write_str\r\n");
         ker_print_raw(s);
         Ok(())
     }
@@ -39,12 +38,6 @@ impl fmt::Write for KerPrintRaw {
 
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
-    ker_print_raw("_print start\r\n");
-    if let Some(s) = args.as_str() {
-        ker_print_raw("yes\r\n");
-        ker_print_raw(s);
-    }
-    // let mut k = KerPrintRaw{};
-    // k.write_fmt(args).unwrap();
-    ker_print_raw("_print end\r\n");
+    let mut k = KerPrintRaw{};
+    k.write_fmt(args).unwrap();
 }
