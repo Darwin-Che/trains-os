@@ -122,8 +122,8 @@ void k_td_print(struct kTaskDsp *kd);
 int k_td_get_syscall_no(struct kTaskDsp *kd);
 
 void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td, uint64_t priority,
-                         void (*user_func)(), uint64_t arg,
-                         const char *data, uint64_t data_len);
+                         void (*user_func)(),
+                         const char *args, size_t args_len);
 
 static inline int k_td_rb_cmp_tid_key(const void *key,
                                       const struct rb_node *node)

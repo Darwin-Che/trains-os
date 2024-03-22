@@ -16,9 +16,6 @@ SECTIONS {
     KEEP("build/kernel.o"(.text.boot))
     build/kernel.o (.text*)
     build/loader.o (.text*)
-		/* KEEP("build/kernel.o"(.text.boot))
-    build/kernel.o (.text*)
-    build/user.o (.text*) */
 	}
 
   /* 2^20 = 1MB */
@@ -34,10 +31,9 @@ SECTIONS {
 
   }
 
-
   /* 2 * 2^20 = 2MB */
   . = 0x200000;
-  PROVIDE(KERNEL_STACK_TOP = .);
+  PROVIDE(KERNEL_STACK_START = .);
   /* 8 * 2^20 = 8MB */
   . = 0x800000;
   PROVIDE(KERNEL_STACK_END = .);
@@ -52,21 +48,17 @@ SECTIONS {
     pie-rust/build/user_entry_elf.o (.*)
   }
 
-  /* Data Segment At 16MB */
-  /* Separate by 2MB - Page Table Entry */
-  /* 2^24 */
-  /* . = 0x1000000;  */
-  /* data_start = .;
-  .data : {
-    build/kernel.o (.*)
-    build/user.o (.*)
-  } */
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(msg_demo_elf_start = .);
+  .msg_demo_elf : {
+    pie-rust/build/msg_demo_elf.o (.*)
+  }
 
-  /* Manually add pie-c */
-  /* . = 0x3000000;
-  .pie : {
-    pie-c/build/test.o (.*)
-  } */
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(msg_demo_child_elf_start = .);
+  .msg_demo_child_elf : {
+    pie-rust/build/msg_demo_child_elf.o (.*)
+  }
 
   PROVIDE(LINKER_CODE_END = .);
 }

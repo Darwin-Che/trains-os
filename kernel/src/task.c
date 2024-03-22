@@ -81,7 +81,7 @@ void k_tmgr_destroy_task(struct kTaskDspMgr *mgr, struct kTaskDsp *td)
 // }
 
 void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td, uint64_t priority,
-                         void (*user_func_addr)(), uint64_t arg, const char *data, uint64_t data_len)
+                         void (*user_func_addr)(), const char *args, size_t args_len)
 {
   td->pc = (uint64_t)user_func_addr;
   td->pstate = 0;
@@ -94,14 +94,13 @@ void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td, uint64
   // simulate the reg_store when the user had an interrupt (saves x0 in syscall_retval, x1-x31 on stack)
   td->esr_el1 = 0; // interrupt indicator
   td->sp = td->stack_addr + (uintptr_t)td->stack_sz;
-  td->syscall_retval = arg; // This gets extracted into x0, which will be treated as argument 1 to user_func_addr.
 
   // copy the data on stack before the registers
-  if (data_len != 0)
+  if (args_len != 0)
   {
-    uint64_t alloc_len = (data_len & ~0xF) + ((data_len & 0xF) ? 0x10 : 0x0); // stack pointer must align at 16 bytes for aarch64
+    uint64_t alloc_len = (args_len & ~0xF) + ((args_len & 0xF) ? 0x10 : 0x0); // stack pointer must align at 16 bytes for aarch64
     td->sp -= alloc_len;
-    util_memcpy((void *)td->sp, data, data_len);
+    util_memcpy((void *)td->sp, args, args_len);
   }
 
   // simulate the reg_store at the top of the stack
@@ -109,8 +108,8 @@ void k_td_init_user_task(struct kTaskDsp *td, struct kTaskDsp *parent_td, uint64
   util_memset(user_reg_store, 0x5A, sizeof(struct kRegStore)); // DEBUG
 
   // pass the data
-  user_reg_store->x01 = td->sp;
-  user_reg_store->x02 = data_len;
+  td->syscall_retval = td->sp; // This gets extracted into x0, which will be treated as argument 1 to user_func_addr.
+  user_reg_store->x01 = args_len;
   user_reg_store->x30 = (uint64_t)ke_exit; // Always ends the process with ke_exit
 
   td->sp = (uint64_t)user_reg_store;

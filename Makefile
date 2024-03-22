@@ -10,7 +10,7 @@ clean:
 	$(MAKE) -C kernel clean
 	$(MAKE) -C user clean
 	$(MAKE) -C lib clean
-	cd pie-rust && ./make_clean.sh
+	$(MAKE) -C pie-rust clean
 	rm -f kernel8.img kernel8.elf
 	rm -rf build/
 	rm -rf dump/
@@ -48,4 +48,5 @@ build/loader.o: lib
 	$(OBJDUMP) -d $@ > $(call dump_file,$@)
 
 pie-rust: lib
-	cd pie-rust && bash make_all.sh
+	$(MAKE) -C pie-rust
+	# cd pie-rust && bash make_all.sh

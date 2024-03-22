@@ -13,10 +13,12 @@
 #include "pgmgr.h"
 #include "lib/include/macro.h"
 #include "sys_val.h"
+#include "loader/include/loader.h"
 
-void k_create_handler(int priority, void (*func)())
+void k_create_handler(int priority, const char * args, size_t args_len)
 {
   DEBUG_PRINT("\r\n");
+  // printf("k_create_handler %s %d\r\n", args, args_len);
   struct kTaskDsp *parent_td = kg_current_td;
   struct kTaskDsp *td = k_tmgr_get_free_task(&kg_gs->task_mgr, PG_SFT);
   if (td == NULL)
@@ -30,7 +32,7 @@ void k_create_handler(int priority, void (*func)())
     kg_current_td->syscall_retval = -1;
     return;
   }
-  k_td_init_user_task(td, parent_td, priority, func, 0, NULL, 0);
+  k_td_init_user_task(td, parent_td, priority, load_elf, args, args_len);
   k_sched_add_ready(&kg_gs->scheduler, td);
   kg_current_td->syscall_retval = td->tid;
 }
@@ -227,12 +229,17 @@ void k_uart_read_reg(int channel, char reg)
   kg_current_td->syscall_retval = 0;
 }
 
-void k_print_raw(const char * msg)
+void k_print_raw(const char * msg, int len)
 {
-  if (msg == NULL)
-    printf("ke_print_raw\r\n");
+  // printf("ke_print_raw %p %d\r\n", msg, len);
+  if (msg != NULL) {
+    for (int i = 0; i < len; i += 1)
+      uart_putc(0, msg[i]);
+    // for (int i = 0; i < len; i += 1)
+    //   printf("msg[%d] = %d\r\n", i, (int) msg[i]);
+  }
   else
-    printf("ke_print_raw %s\r\n", msg);
+    printf("NULL\r\n");
 
   for (int i = 0; i <= 65535; i += 1)
     asm volatile("yield");
