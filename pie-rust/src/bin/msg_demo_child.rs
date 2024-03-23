@@ -63,7 +63,7 @@ pub extern "C" fn _start() {
     }
 
     println!("send_box\r\n{:?}", send_box.as_slice());
-    ker_send(parent_tid, &send_box, &mut recv_box);
+    ker_send(parent_tid, &send_box, &mut recv_box).unwrap();
     let recv_enum = RecvEnum::from_recv_bytes(&mut recv_box);
     println!("recv_enum\r\n{:?}", recv_enum);
 
@@ -75,7 +75,7 @@ pub extern "C" fn _start() {
     }
 
     println!("send_box\r\n{:?}", send_box.as_slice());
-    ker_send(parent_tid, &send_box, &mut recv_box);
+    ker_send(parent_tid, &send_box, &mut recv_box).unwrap();
     let recv_enum = RecvEnum::from_recv_bytes(&mut recv_box);
     println!("recv_enum\r\n{:?}", recv_enum);
 }

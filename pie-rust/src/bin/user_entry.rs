@@ -19,7 +19,7 @@ pub extern "C" fn _start() {
 
     rust_pie::sys::print_raw::ker_print_raw(msg1);
 
-    let child_args = "PROGRAM\0msg_demo\0".as_bytes();
+    let child_args = "PROGRAM\0name_server_demo\0".as_bytes();
     let child_tid = ker_create(1, child_args).unwrap();
     println!("child_tid = {child_tid}");
 

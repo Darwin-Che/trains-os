@@ -1,4 +1,7 @@
-all: build/user_entry_elf.o build/msg_demo_elf.o build/msg_demo_child_elf.o
+PROGRAMS=user_entry msg_demo msg_demo_child name_server name_server_demo
+PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
+
+all: $(PROGRAMS_ELF)
 
 TARGET=aarch64-unknown-linux-gnu
 

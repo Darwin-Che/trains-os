@@ -7,6 +7,9 @@ edition = "2021"
 
 [dependencies]
 msgbox_macro = { path = "deps/msgbox_macro" }
+heapless = "0.8.0"
+# ahash = { version = "0.8.11", default-features = false }
+fnv = { version = "1.0.7", default-features = false }
 
 [profile.dev]
 panic = "abort"
@@ -15,4 +18,3 @@ opt-level = 0
 [profile.release]
 panic = "abort"
 opt-level = 3
-debug = false
