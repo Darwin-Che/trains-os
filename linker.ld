@@ -59,6 +59,18 @@ SECTIONS {
   .msg_demo_child_elf : {
     pie-rust/build/msg_demo_child_elf.o (.*)
   }
+  
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(name_server_elf_start = .);
+  .name_server_elf : {
+    pie-rust/build/name_server_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(name_server_demo_elf_start = .);
+  .name_server_demo_elf : {
+    pie-rust/build/name_server_demo_elf.o (.*)
+  }
 
   PROVIDE(LINKER_CODE_END = .);
 }

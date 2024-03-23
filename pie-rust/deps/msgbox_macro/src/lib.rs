@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn;
-use proc_macro2;
+// use syn;
+// use proc_macro2;
 
 fn type_to_msg_id(input: &str) -> proc_macro2::TokenStream {
     let input_bytes = input.as_bytes();
@@ -22,28 +22,25 @@ pub fn derive_recv_enum_trait(input: TokenStream) -> TokenStream {
     let enum_name = syn_item.ident;
     let generics = syn_item.generics;
 
-    let variants = match syn_item.data {
+    let variant = match syn_item.data {
         syn::Data::Enum(enum_item) => {
             enum_item.variants.into_iter().map(|v| v.ident).collect::<Vec<_>>()
         }
         _ => panic!("AllVariants only works on enums"),
     };
 
-    // println!("{:?}", variants);
-    let patterns = variants.iter().map(|v| type_to_msg_id(&v.to_string())).collect::<Vec<_>>();
-    // for p in patterns.iter() {
-    //     println!("{:?}", p.to_string());
-    // }
+    let pattern = variant.iter().map(|v| type_to_msg_id(&v.to_string())).collect::<Vec<_>>();
 
     let expanded = quote! {
         impl #generics RecvEnumTrait #generics for #enum_name #generics {
             fn from_recv_bytes<const N: usize>(recv_box: &'a mut RecvBox<N>) -> Option<#enum_name <'a>> {
-                #(
-                    if let #patterns = &mut recv_box.recv_buf[..] {
-                        return Some(Self::#variants(unsafe { &mut *(data.as_mut_ptr() as *mut #variants) }));
-                    }
-                )*
-                return None;
+                match &mut recv_box.recv_buf[..] {
+                    #(
+                        // Split recv_buf into two halfs: First Half is Pattern + Struct, Second Half is Attach Arrays
+                        #pattern => Some(Self::#variant(#variant::from_recv_bytes(data))),
+                    )*
+                    _ => None,
+                }
             }
         }
     };
@@ -59,6 +56,8 @@ pub fn derive_msg_trait(input: TokenStream) -> TokenStream {
     let struct_name = syn_item.ident;
     let struct_name_str = struct_name.to_string();
     let generics = syn_item.generics;
+
+    let struct_name_str_total_len = (struct_name_str.len() + 8) & !7; // Adding the null term
 
     let fields = match syn_item.data {
         syn::Data::Struct(struct_item) => {
@@ -88,18 +87,42 @@ pub fn derive_msg_trait(input: TokenStream) -> TokenStream {
     // println!("{:?}", fields);
     // println!("{:?}", fields_filtered_ident);
 
-    let expanded = quote! {
-        impl<'a> MsgTrait<'a> for #struct_name #generics {
-            fn type_name() -> &'static str {
-                &#struct_name_str
+    let expanded = 
+        if fields_filtered_ident.len() == 0 {
+            quote! {
+                impl<'a> MsgTrait<'a> for #struct_name #generics {
+                    fn type_name() -> &'static str {
+                        &#struct_name_str
+                    }
+                }
             }
+        } else {
+            quote! {
+                impl<'a> MsgTrait<'a> for #struct_name #generics {
+                    fn type_name() -> &'static str {
+                        &#struct_name_str
+                    }
+                    
+                    fn from_recv_bytes(buf: &'a mut [u8]) -> &'a mut Self {
+                        let (obj_bytes, attached_buf) = buf.split_at_mut(core::mem::size_of::<Self>());
 
-            fn resolve_attached_array_ref(&'a mut self, buf: &'a mut [u8]) {
-                #(
-                    self.#fields_filtered_ident.calc_array(buf);
-                )*
+                        let obj = unsafe { &mut *(obj_bytes.as_mut_ptr() as *mut Self) };
+
+                        // println!("RecvEnum::from_recv_bytes {:p} {}", obj, #struct_name_str_total_len);
+
+                        let mut array_fields = [ #(&mut obj.#fields_filtered_ident)* ];
+                        
+                        AttachedArray::from_recv_bytes(
+                            &mut array_fields,
+                            attached_buf,
+                            #struct_name_str_total_len + core::mem::size_of::<Self>()
+                        );
+
+                        obj
+                    }
+                }
             }
-        }
-    };
+        };
+
     expanded.into()
 }
