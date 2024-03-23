@@ -7,6 +7,8 @@ edition = "2021"
 
 [dependencies]
 msgbox_macro = { path = "deps/msgbox_macro" }
+heapless = "0.8.0"
+rustc-hash = { version = "1.0", default-features = false }
 
 [profile.dev]
 panic = "abort"
