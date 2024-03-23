@@ -23,11 +23,17 @@ pub struct RecvBox<const N: usize = DEFAULT_BOX_SIZE> {
     pub recv_buf: [u8; N],
 }
 
-impl<const N: usize> RecvBox<N> {
-    pub fn new() -> Self {
+impl<const N: usize> Default for RecvBox<N> {
+    fn default() -> Self {
         RecvBox {
             recv_buf: [0u8; N]
         }
+    }
+}
+
+impl<const N: usize> RecvBox<N> {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn recv_test(&mut self, test_recv_buf: &[u8]) {
@@ -47,18 +53,22 @@ pub struct SendBox<const N: usize = DEFAULT_BOX_SIZE> {
     send_buf: [u8; N],
 }
 
-impl<const N: usize> SendBox<N> {
-    pub fn as_slice(&mut self) -> &mut [u8] {
-        &mut self.send_buf[..self.len]
-    }
-}
-
 impl<const N: usize> Default for SendBox<N> {
     fn default() -> SendBox<N> {
         SendBox {
             len: 0,
             send_buf: [0u8; N],
         }
+    }
+}
+
+impl<const N: usize> SendBox<N> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn as_slice(&mut self) -> &mut [u8] {
+        &mut self.send_buf[..self.len]
     }
 }
 
@@ -168,41 +178,51 @@ impl<'a, T> AttachedArray<'a, T> {
 
 #[link(name = "syscall")]
 extern "C" {
-    fn ke_recv(tid: *mut c_int, recv_buf: *mut c_char, buf_len: usize);
-    fn ke_reply(tid: c_int, reply_buf: *const c_char, buf_len: usize);
-    fn ke_send(tid: c_int, send_buf: *const c_char, send_buf_len: usize, reply_buf: *mut c_char, reply_buf_len: usize);
+    fn ke_recv(tid: *mut c_int, recv_buf: *mut c_char, buf_len: usize) -> c_int;
+    fn ke_reply(tid: c_int, reply_buf: *const c_char, buf_len: usize) -> c_int;
+    fn ke_send(tid: c_int, send_buf: *const c_char, send_buf_len: usize, reply_buf: *mut c_char, reply_buf_len: usize) -> c_int;
 }
 
 pub fn ker_recv<const R: usize>(recv_box: &mut RecvBox<R>) -> Tid {
-    let tid: Tid = 0;
+    let mut tid: Tid = 0;
     unsafe {
         ke_recv(
-            tid as *mut c_int,
+            &mut tid as *mut c_int,
             recv_box.recv_buf.as_mut_ptr() as *mut c_char,
             R
         );
-        tid
     }
+    tid
 }
 
-pub fn ker_reply<const S: usize>(tid: Tid, send_box: &SendBox<S>) {
-    unsafe {
+pub fn ker_reply<const S: usize>(tid: Tid, send_box: &SendBox<S>) -> Result<(), i32> {
+    let ret = unsafe {
         ke_reply(
             tid as c_int,
             send_box.send_buf.as_ptr() as *const c_char,
             send_box.len
-        );
+        )
+    };
+    if ret < 0 {
+        Err(ret as i32)
+    } else {
+        Ok(())
     }
 }
 
-pub fn ker_send<const S: usize, const R: usize>(tid: Tid, send_box: &SendBox<S>, recv_box: &mut RecvBox<R>) {
-    unsafe {
+pub fn ker_send<const S: usize, const R: usize>(tid: Tid, send_box: &SendBox<S>, recv_box: &mut RecvBox<R>) -> Result<(), i32> {
+    let ret = unsafe {
         ke_send(
             tid as c_int,
             send_box.send_buf.as_ptr() as *const c_char,
             send_box.len,
             recv_box.recv_buf.as_mut_ptr() as *mut c_char,
             R
-        );
+        )
+    };
+    if ret < 0 {
+        Err(ret as i32)
+    } else {
+        Ok(())
     }
 }
