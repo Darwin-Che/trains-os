@@ -68,7 +68,7 @@ pub extern "C" fn _start() {
         resp.embed_field.embed = 200;
     }
 
-    ker_reply(child_tid, &send_box);
+    ker_reply(child_tid, &send_box).unwrap();
 
     /* Second Communication */
 
@@ -83,5 +83,5 @@ pub extern "C" fn _start() {
         resp.embed_field.embed = 201;
     }
 
-    ker_reply(child_tid, &send_box);
+    ker_reply(child_tid, &send_box).unwrap();
 }

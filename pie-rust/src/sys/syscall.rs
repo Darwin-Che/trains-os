@@ -5,6 +5,7 @@ use crate::sys::types::Tid;
 extern "C" {
     fn ke_create(priority: c_int, args: *const c_char, args_len: c_size_t) -> c_int;
     fn ke_my_parent_tid() -> c_int;
+    fn ke_my_tid() -> c_int;
 }
 
 pub fn ker_create(priority: i32, args: &[u8]) -> Result<Tid, i32> {
@@ -25,5 +26,10 @@ pub fn ker_create(priority: i32, args: &[u8]) -> Result<Tid, i32> {
 pub fn ker_parent_tid() -> Tid {
     unsafe {
         ke_my_parent_tid() as Tid
+    }
+}
+pub fn ker_my_tid() -> Tid {
+    unsafe {
+        ke_my_tid() as Tid
     }
 }

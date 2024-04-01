@@ -2,6 +2,8 @@ use core::marker::PhantomData;
 use core::{mem, slice};
 use super::types::*;
 use core::ffi::{c_char, c_int};
+use core::ops::{Deref, DerefMut};
+use crate::println;
 
 /* MsgTrait */
 
@@ -9,9 +11,9 @@ pub trait MsgTrait<'a> : Default {
     fn type_name() -> &'static str {
         &"MsgTrait"
     }
-    fn resolve_attached_array_ref(&'a mut self, _buf: &'a mut [u8]) {}
-    fn resolve_after_recv(&'a mut self, buf: &'a mut [u8]) {
-        self.resolve_attached_array_ref(buf);
+
+    fn from_recv_bytes(buf: &'a mut [u8]) -> &'a mut Self {
+        unsafe { &mut *(buf.as_mut_ptr() as *mut Self) }
     }
 }
 
@@ -19,15 +21,22 @@ const DEFAULT_BOX_SIZE: usize = 1024;
 
 /* Recv */
 
+#[repr(align(64))]
 pub struct RecvBox<const N: usize = DEFAULT_BOX_SIZE> {
     pub recv_buf: [u8; N],
 }
 
-impl<const N: usize> RecvBox<N> {
-    pub fn new() -> Self {
+impl<const N: usize> Default for RecvBox<N> {
+    fn default() -> Self {
         RecvBox {
             recv_buf: [0u8; N]
         }
+    }
+}
+
+impl<const N: usize> RecvBox<N> {
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn recv_test(&mut self, test_recv_buf: &[u8]) {
@@ -47,18 +56,22 @@ pub struct SendBox<const N: usize = DEFAULT_BOX_SIZE> {
     send_buf: [u8; N],
 }
 
-impl<const N: usize> SendBox<N> {
-    pub fn as_slice(&mut self) -> &mut [u8] {
-        &mut self.send_buf[..self.len]
-    }
-}
-
 impl<const N: usize> Default for SendBox<N> {
     fn default() -> SendBox<N> {
         SendBox {
             len: 0,
             send_buf: [0u8; N],
         }
+    }
+}
+
+impl<const N: usize> SendBox<N> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn as_slice(&mut self) -> &mut [u8] {
+        &mut self.send_buf[..self.len]
     }
 }
 
@@ -126,9 +139,9 @@ impl<'a, T> SendCtr<'a, T> {
         Some(AttachedArray {
             idx: (*self.idx - cnt * tsize) as u32,
             cnt: cnt as u32,
-            array: unsafe{ 
+            array: Some(unsafe{ 
                 slice::from_raw_parts_mut(array.as_mut_ptr() as *mut I, cnt)
-            },
+            }),
         })
     }
 }
@@ -150,17 +163,49 @@ pub struct AttachedArray<'a, T> {
      */
     idx: u32,
     cnt: u32,
-    pub array: &'a mut [T],
+    array: Option<&'a mut [T]>,
 }
 
 impl<'a, T> AttachedArray<'a, T> {
-    pub fn calc_array(&mut self, buf: &'a mut [u8]) {
-        self.array = unsafe {
-            slice::from_raw_parts_mut(
-                buf[self.idx as usize..(self.idx as usize + self.cnt as usize * mem::size_of::<T>())].as_mut_ptr() as *mut T,
-                self.cnt as usize
-            )
-        };
+    pub fn from_recv_bytes(ref_array: &mut [&mut Self], mut buf: &'a mut [u8], idx_offset: usize) {
+        // println!("AttachedArray::from_recv_bytes {idx_offset} START {:p}", buf);
+        // println!("BUF {:?}", &buf[0..32]);
+
+        // firstly, sort attached array by idx
+        ref_array.sort_unstable_by_key(|aa| aa.idx);
+
+        let mut offset = idx_offset as u32;
+
+        // For each attached array
+        for aa in ref_array {
+            let start = aa.idx - offset;
+            if start != 0 {
+                buf = buf.split_at_mut(start as usize).1;
+            }
+
+            // Split the buf for the segment containing this array
+            let split_buf = buf.split_at_mut(aa.cnt as usize * mem::size_of::<T>());
+            aa.array = Some(unsafe { slice::from_raw_parts_mut(split_buf.0.as_mut_ptr() as *mut T, aa.cnt as usize) });
+
+            // Update the buf to the rest of the array
+            buf = split_buf.1;
+            // Update buf offset with the segment we just cut off
+            offset = start + aa.cnt * mem::size_of::<T>() as u32;
+        }
+    }
+}
+
+impl<'a, T> Deref for AttachedArray<'a, T> {
+    type Target = [T];
+
+    fn deref(&self) -> &Self::Target {
+        self.array.as_ref().unwrap()
+    }
+}
+
+impl<'a, T> DerefMut for AttachedArray<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.array.as_mut().unwrap()
     }
 }
 
@@ -168,41 +213,51 @@ impl<'a, T> AttachedArray<'a, T> {
 
 #[link(name = "syscall")]
 extern "C" {
-    fn ke_recv(tid: *mut c_int, recv_buf: *mut c_char, buf_len: usize);
-    fn ke_reply(tid: c_int, reply_buf: *const c_char, buf_len: usize);
-    fn ke_send(tid: c_int, send_buf: *const c_char, send_buf_len: usize, reply_buf: *mut c_char, reply_buf_len: usize);
+    fn ke_recv(tid: *mut c_int, recv_buf: *mut c_char, buf_len: usize) -> c_int;
+    fn ke_reply(tid: c_int, reply_buf: *const c_char, buf_len: usize) -> c_int;
+    fn ke_send(tid: c_int, send_buf: *const c_char, send_buf_len: usize, reply_buf: *mut c_char, reply_buf_len: usize) -> c_int;
 }
 
 pub fn ker_recv<const R: usize>(recv_box: &mut RecvBox<R>) -> Tid {
-    let tid: Tid = 0;
+    let mut tid: Tid = 0;
     unsafe {
         ke_recv(
-            tid as *mut c_int,
+            &mut tid as *mut c_int,
             recv_box.recv_buf.as_mut_ptr() as *mut c_char,
             R
         );
-        tid
     }
+    tid
 }
 
-pub fn ker_reply<const S: usize>(tid: Tid, send_box: &SendBox<S>) {
-    unsafe {
+pub fn ker_reply<const S: usize>(tid: Tid, send_box: &SendBox<S>) -> Result<(), i32> {
+    let ret = unsafe {
         ke_reply(
             tid as c_int,
             send_box.send_buf.as_ptr() as *const c_char,
             send_box.len
-        );
+        )
+    };
+    if ret < 0 {
+        Err(ret as i32)
+    } else {
+        Ok(())
     }
 }
 
-pub fn ker_send<const S: usize, const R: usize>(tid: Tid, send_box: &SendBox<S>, recv_box: &mut RecvBox<R>) {
-    unsafe {
+pub fn ker_send<const S: usize, const R: usize>(tid: Tid, send_box: &SendBox<S>, recv_box: &mut RecvBox<R>) -> Result<(), i32> {
+    let ret = unsafe {
         ke_send(
             tid as c_int,
             send_box.send_buf.as_ptr() as *const c_char,
             send_box.len,
             recv_box.recv_buf.as_mut_ptr() as *mut c_char,
             R
-        );
+        )
+    };
+    if ret < 0 {
+        Err(ret as i32)
+    } else {
+        Ok(())
     }
 }

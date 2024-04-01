@@ -32,13 +32,6 @@ int k_main()
 
   uart_init(2, 115200);
 
-  while (1) {
-    spi_uart_putc(0, 0, 'X');
-    uart_putc(2, 'Y');
-    for (int i = 0; i < 65535; i += 1)
-      asm volatile("nop");
-  }
-
   exception_vector_setup();
 
   struct kGlobalState gs;
@@ -66,31 +59,42 @@ int k_main()
 
   pgmgr_debug_print(SYSADDR.pgmgr, false);
 
+  // setup idle_task : tid = 0
   printf("Kernel Start - creating idle task\r\n");
-
-  // setup idle_td
   struct kTaskDsp *idle_td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT);
   if (idle_td == NULL)
   {
     printf("Failed to create idle_td\r\n");
     return 0;
   }
-
   k_td_init_user_task(idle_td, NULL, K_SCHED_PRIO_MIN, idle_task, NULL, 0);
   gs.task_mgr.idle_task = idle_td;
 
-  printf("Kernel Start - creating user_entry\r\n");
-
-  struct kTaskDsp *td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT); // only tid is written
-  if (td == NULL)
+  // setup user_entry : tid = 1
+  struct kTaskDsp *user_entry_td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT);
+  if (user_entry_td == NULL)
   {
     printf("Failed to create user_entry_td\r\n");
     return 0;
   }
+  printf("Kernel Start - creating user_entry - tid = %lld\r\n", user_entry_td->tid);
   const char user_entry_task_args[] = "PROGRAM\0user_entry";
-  k_td_init_user_task(td, NULL, K_SCHED_PRIO_MAX, load_elf, user_entry_task_args, sizeof(user_entry_task_args)); // init other fields
-  k_sched_add_ready(&gs.scheduler, td);
+  k_td_init_user_task(user_entry_td, NULL, K_SCHED_PRIO_MAX, load_elf, user_entry_task_args, sizeof(user_entry_task_args)); // init other fields
+  k_sched_add_ready(&gs.scheduler, user_entry_td);
 
+  // setup name_server : tid = 2
+  struct kTaskDsp *name_server_td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT);
+  if (name_server_td == NULL)
+  {
+    printf("Failed to create name_server\r\n");
+    return 0;
+  }
+  printf("Kernel Start - creating name_server - tid = %lld\r\n", name_server_td->tid);
+  const char name_server_task_args[] = "PROGRAM\0name_server";
+  k_td_init_user_task(name_server_td, NULL, K_SCHED_PRIO_MAX, load_elf, name_server_task_args, sizeof(name_server_task_args)); // init other fields
+  k_sched_add_ready(&gs.scheduler, name_server_td);
+
+  // Start the Loop
   k_gic_enable();
   k_loop(&gs);
 

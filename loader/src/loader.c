@@ -99,8 +99,9 @@ void load_elf(const char *args, uint64_t args_len)
   DEBUG_LOADER_PRINTF("args = %p, args_len = %llu\r\n", args, args_len);
 
   for (uint64_t i = 0; i < args_len; i += 1) {
-    if (args[i] == '\0')
+    if (args[i] == '\0') {
       DEBUG_LOADER_PRINTF(",");
+    }
     DEBUG_LOADER_PRINTF("%c", args[i]);
   }
   DEBUG_LOADER_PRINTF("\r\nargs_len = %d\r\n", args_len);
@@ -139,7 +140,7 @@ void load_elf(const char *args, uint64_t args_len)
 
   // Step 5 : Jump to function start
   EntryFunc entry_func = (EntryFunc) (elf_reader.e_hdr->e_entry + vaddr_diff);
-  printf("Step 5 : Jump to %x\r\n", entry_func);
+  printf("LOADER : Jump to %x\r\n", entry_func);
 
   // DEBUG
   // const uint32_t * peek_data = (const uint32_t *) entry_func;
