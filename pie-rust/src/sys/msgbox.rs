@@ -1,9 +1,8 @@
-use core::marker::PhantomData;
 use core::{mem, slice};
 use super::types::*;
 use core::ffi::{c_char, c_int};
 use core::ops::{Deref, DerefMut};
-use crate::println;
+// use crate::println;
 
 /* MsgTrait */
 
@@ -75,14 +74,28 @@ impl<const N: usize> SendBox<N> {
     }
 }
 
-pub struct SendCtr<'a, T> {
+pub struct SendCtx<'a, T> {
+    t: &'a mut T,
     send_buf: &'a mut [u8],
     idx: &'a mut usize,
-    phantom: PhantomData<T>,
 }
 
-impl<'a, T> SendCtr<'a, T> {
-    pub fn new<const N: usize>(send_box: &'a mut SendBox<N>) -> Option<(Self, &'a mut T)> where T: MsgTrait<'a> {
+impl<'a, T> Deref for SendCtx<'a, T> {
+    type Target = &'a mut T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.t
+    }
+}
+
+impl<'a, T> DerefMut for SendCtx<'a, T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.t
+    }
+}
+
+impl<'a, T> SendCtx<'a, T> {
+    pub fn new<const N: usize>(send_box: &'a mut SendBox<N>) -> Option<Self> where T: MsgTrait<'a> {
         let send_buf = &mut send_box.send_buf;
         let send_type = T::type_name();
         // Calculate the minimum length we need
@@ -97,26 +110,25 @@ impl<'a, T> SendCtr<'a, T> {
             return None;
         }
         // Split send_buf for ownership
-        let (send_buf, send_buf_rest) = send_buf.split_at_mut(total_len);
+        let (buf_type, buf_after_type) = send_buf.split_at_mut(send_type_len + padding_len);
+        let (buf_struct, buf_after_struct) = buf_after_type.split_at_mut(struct_len);
         // Write send_type
         // println!("send_type = {:?}", send_type);
-        send_buf[..send_type_len].copy_from_slice(send_type.as_bytes());
+        buf_type[..send_type_len].copy_from_slice(send_type.as_bytes());
         // Write padding
-        for i in send_type_len..(send_type_len+padding_len) {
-            send_buf[i] = 0u8;
-        }
+        buf_type[send_type_len..].fill(0u8);
         // Extract &'a mut T
-        let t = unsafe { &mut *(send_buf[send_type_len+padding_len..total_len].as_ptr() as *mut T) };
+        let t = unsafe { &mut *(buf_struct.as_ptr() as *mut T) };
         *t = T::default();
         let s = Self {
-            send_buf: send_buf_rest,
+            t: t,
+            send_buf: buf_after_struct,
             idx: &mut send_box.len,
-            phantom: PhantomData::default(),
         };
-        Some((s, t))
+        Some(s)
     }
 
-    pub fn attach_array<I>(&'a mut self, cnt: usize) -> Option<AttachedArray<'a, I>> {
+    pub fn attach_array<I>(&mut self, cnt: usize) -> Option<AttachedArray<'a, I>> {
         let align = mem::align_of::<I>();
         let tsize = mem::size_of::<I>();
 
@@ -131,7 +143,10 @@ impl<'a, T> SendCtr<'a, T> {
 
         // Split the buffer at new idx
         *self.idx += padding_len + cnt * tsize;
-        let (_padding, send_buf_after_padding) = self.send_buf.split_at_mut(padding_len);
+
+        // Need to use mem::take to remove the life time connection between the attached array and self
+        let send_buf = mem::take(&mut self.send_buf);
+        let (_padding, send_buf_after_padding) = send_buf.split_at_mut(padding_len);
         let (array, send_buf_after_array) = send_buf_after_padding.split_at_mut(cnt * tsize);
         self.send_buf = send_buf_after_array;
 
@@ -150,7 +165,7 @@ impl<'a, T> SendCtr<'a, T> {
 
 #[repr(C)]
 #[derive(Debug, Default)]
-pub struct AttachedArray<'a, T> {
+pub struct AttachedArray<'a, I> {
     // {idx, cnt} encodes the relative position to the byte stream
     // {array} encodes the absolution address of the slice
     /*
@@ -163,11 +178,11 @@ pub struct AttachedArray<'a, T> {
      */
     idx: u32,
     cnt: u32,
-    array: Option<&'a mut [T]>,
+    array: Option<&'a mut [I]>,
 }
 
-impl<'a, T> AttachedArray<'a, T> {
-    pub fn from_recv_bytes(ref_array: &mut [&mut Self], mut buf: &'a mut [u8], idx_offset: usize) {
+impl<'a, I> AttachedArray<'a, I> {
+    pub fn from_recv_bytes(ref_array: &mut [&mut Self], mut buf: &mut [u8], idx_offset: usize) {
         // println!("AttachedArray::from_recv_bytes {idx_offset} START {:p}", buf);
         // println!("BUF {:?}", &buf[0..32]);
 
@@ -184,26 +199,26 @@ impl<'a, T> AttachedArray<'a, T> {
             }
 
             // Split the buf for the segment containing this array
-            let split_buf = buf.split_at_mut(aa.cnt as usize * mem::size_of::<T>());
-            aa.array = Some(unsafe { slice::from_raw_parts_mut(split_buf.0.as_mut_ptr() as *mut T, aa.cnt as usize) });
+            let split_buf = buf.split_at_mut(aa.cnt as usize * mem::size_of::<I>());
+            aa.array = Some(unsafe { slice::from_raw_parts_mut(split_buf.0.as_mut_ptr() as *mut I, aa.cnt as usize) });
 
             // Update the buf to the rest of the array
             buf = split_buf.1;
             // Update buf offset with the segment we just cut off
-            offset = start + aa.cnt * mem::size_of::<T>() as u32;
+            offset = start + aa.cnt * mem::size_of::<I>() as u32;
         }
     }
 }
 
-impl<'a, T> Deref for AttachedArray<'a, T> {
-    type Target = [T];
+impl<'a, I> Deref for AttachedArray<'a, I> {
+    type Target = [I];
 
     fn deref(&self) -> &Self::Target {
         self.array.as_ref().unwrap()
     }
 }
 
-impl<'a, T> DerefMut for AttachedArray<'a, T> {
+impl<'a, I> DerefMut for AttachedArray<'a, I> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         self.array.as_mut().unwrap()
     }

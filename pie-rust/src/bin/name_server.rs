@@ -45,7 +45,7 @@ pub extern "C" fn _start() {
             println!("{:?}", &recv_box.recv_buf[32..64]);
         }
 
-        let (_send_ctr, ns_resp) = SendCtr::<NsResp>::new(&mut send_box).unwrap();
+        let mut ns_resp = SendCtx::<NsResp>::new(&mut send_box).unwrap();
 
         ns_resp.tid = match RecvEnum::from_recv_bytes(&mut recv_box) {
             Some(RecvEnum::NsGetReq(get_req)) => handle_get_req(&mut name_map, get_req),

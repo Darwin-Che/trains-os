@@ -33,7 +33,7 @@ pub fn derive_recv_enum_trait(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl #generics RecvEnumTrait #generics for #enum_name #generics {
-            fn from_recv_bytes<const N: usize>(recv_box: &'a mut RecvBox<N>) -> Option<#enum_name <'a>> {
+            fn from_recv_bytes<const N: usize>(recv_box: &'a mut RecvBox<N>) -> Option<Self> {
                 match &mut recv_box.recv_buf[..] {
                     #(
                         // Split recv_buf into two halfs: First Half is Pattern + Struct, Second Half is Attach Arrays
@@ -90,7 +90,7 @@ pub fn derive_msg_trait(input: TokenStream) -> TokenStream {
     let expanded = 
         if fields_filtered_ident.len() == 0 {
             quote! {
-                impl<'a> MsgTrait<'a> for #struct_name #generics {
+                impl<'a> MsgTrait<'a> for #struct_name {
                     fn type_name() -> &'static str {
                         &#struct_name_str
                     }
@@ -98,12 +98,12 @@ pub fn derive_msg_trait(input: TokenStream) -> TokenStream {
             }
         } else {
             quote! {
-                impl<'a> MsgTrait<'a> for #struct_name #generics {
+                impl<'a> MsgTrait<'a> for #struct_name <'a> {
                     fn type_name() -> &'static str {
                         &#struct_name_str
                     }
                     
-                    fn from_recv_bytes(buf: &'a mut [u8]) -> &'a mut Self {
+                    fn from_recv_bytes(buf: &'a mut [u8]) -> &mut Self {
                         let (obj_bytes, attached_buf) = buf.split_at_mut(core::mem::size_of::<Self>());
 
                         let obj = unsafe { &mut *(obj_bytes.as_mut_ptr() as *mut Self) };
