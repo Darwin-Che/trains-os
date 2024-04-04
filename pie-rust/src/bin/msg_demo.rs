@@ -63,7 +63,7 @@ pub extern "C" fn _start() {
     println!("recv_enum\r\n{:?}", recv_enum);
 
     {
-        let (_send_ctr, resp) = SendCtr::<MsgDemoResp>::new(&mut send_box).unwrap();
+        let mut resp = SendCtx::<MsgDemoResp>::new(&mut send_box).unwrap();
         resp.simple_field = 20;
         resp.embed_field.embed = 200;
     }
@@ -78,7 +78,7 @@ pub extern "C" fn _start() {
     println!("recv_enum\r\n{:?}", recv_enum);
 
     {
-        let (_send_ctr, resp) = SendCtr::<MsgDemoResp>::new(&mut send_box).unwrap();
+        let mut resp = SendCtx::<MsgDemoResp>::new(&mut send_box).unwrap();
         resp.simple_field = 21;
         resp.embed_field.embed = 201;
     }

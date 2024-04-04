@@ -56,8 +56,8 @@ pub extern "C" fn _start() {
 
     {
         let array_bytes = "array_field".as_bytes();
-        let (mut send_ctr, req1) = SendCtr::<MsgDemoReq1>::new(&mut send_box).unwrap();
-        req1.array_field = send_ctr.attach_array(array_bytes.len()).unwrap();
+        let mut req1 = SendCtx::<MsgDemoReq1>::new(&mut send_box).unwrap();
+        req1.array_field = req1.attach_array(array_bytes.len()).unwrap();
         req1.array_field.copy_from_slice(array_bytes);
         req1.simple_field = 100;
     }
@@ -68,8 +68,8 @@ pub extern "C" fn _start() {
     println!("recv_enum\r\n{:?}", recv_enum);
 
     {
-        let (mut send_ctr, req2) = SendCtr::<MsgDemoReq2>::new(&mut send_box).unwrap();
-        req2.array_field = send_ctr.attach_array(2).unwrap();
+        let mut req2 = SendCtx::<MsgDemoReq2>::new(&mut send_box).unwrap();
+        req2.array_field = req2.attach_array(2).unwrap();
         req2.array_field[0].embed = 101;
         req2.array_field[1].embed = 102;
     }

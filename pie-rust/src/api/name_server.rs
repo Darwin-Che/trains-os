@@ -29,7 +29,7 @@ enum NsRespRecvEnum<'a> {
     NsResp(&'a NsResp),
 }
 
-const DEBUG : bool = true;
+// const DEBUG : bool = true;
 const NS_SENDBOX_SZ : usize = NS_NAME_LIMIT + 64;
 const NS_RECVBOX_SZ : usize = 64;
 
@@ -39,8 +39,8 @@ fn ns_get_loop(name: &str, wait: u32, cnt: i32) -> Option<Tid> {
     let mut ns_recvbox : RecvBox<NS_RECVBOX_SZ> = RecvBox::default();
 
     {
-        let (mut send_ctr, get_req) = SendCtr::<NsGetReq>::new(&mut ns_sendbox).unwrap();
-        get_req.name = send_ctr.attach_array(name_bytes.len()).unwrap();
+        let mut get_req = SendCtx::<NsGetReq>::new(&mut ns_sendbox).unwrap();
+        get_req.name = get_req.attach_array(name_bytes.len()).unwrap();
         get_req.name.copy_from_slice(name_bytes);
     }
 
@@ -82,8 +82,8 @@ pub fn ns_set(name: &str) -> Result<Tid, ()> {
     let mut ns_recvbox : RecvBox<NS_RECVBOX_SZ> = RecvBox::default();
 
     {
-        let (mut send_ctr, set_req) = SendCtr::<NsSetReq>::new(&mut ns_sendbox).unwrap();
-        set_req.name = send_ctr.attach_array(name_bytes.len()).unwrap();
+        let mut set_req = SendCtx::<NsSetReq>::new(&mut ns_sendbox).unwrap();
+        set_req.name = set_req.attach_array(name_bytes.len()).unwrap();
         set_req.name.copy_from_slice(name_bytes);
     } 
 
