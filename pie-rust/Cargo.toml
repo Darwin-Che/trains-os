@@ -10,6 +10,7 @@ msgbox_macro = { path = "deps/msgbox_macro" }
 heapless = "0.8.0"
 # ahash = { version = "0.8.11", default-features = false }
 fnv = { version = "1.0.7", default-features = false }
+volatile-register = "0.2.2"
 
 [profile.dev]
 panic = "abort"

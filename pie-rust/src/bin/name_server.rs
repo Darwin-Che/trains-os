@@ -17,7 +17,7 @@ fn panic(info: &PanicInfo) -> ! {
     loop {}
 }
 
-const DEBUG: bool = false;
+const DEBUG: bool = true;
 const MAP_CAP : usize = 128;
 type NameMap = FnvIndexMap::<u64, Tid, MAP_CAP>;
 
@@ -35,6 +35,10 @@ pub extern "C" fn _start() {
 
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
+
+    if DEBUG {
+        println!("Name Server : I am HERE!");
+    }
     
     loop {
         let sender_tid = ker_recv(&mut recv_box);

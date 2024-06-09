@@ -28,8 +28,6 @@ int k_main()
 {
   k_bootstrap_slab();
 
-  uart_init(0, 115200);
-
   uart_init(2, 115200);
 
   exception_vector_setup();
@@ -39,14 +37,14 @@ int k_main()
 
 #ifdef DEBUG
   k_page_table_print_all();
-  uart_getc(0);
+  uart_getc(2);
 #endif
 
   printf("This is trains-os (" __TIME__ ")\r\n");
-  uart_getc(0);
+  uart_getc(2);
 
   printf("Enable MMU? y/n\r\n");
-  char c = uart_getc(0);
+  char c = uart_getc(2);
   if (c == 'y')
   {
     turn_on_mmu();

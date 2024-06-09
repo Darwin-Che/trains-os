@@ -17,19 +17,6 @@
 
 #define KE_INTR_ID_RANGE_MIN (16)
 
-enum keIntrId
-{
-  KE_INTR_TIMER = KE_INTR_ID_RANGE_MIN,
-  KE_INTR_TERM_INPUT,
-  KE_INTR_TERM_OUTPUT,
-  KE_INTR_MARKLIN_INPUT,
-  KE_INTR_MARKLIN_OUTPUT,
-  // This CTS wait event will unblock(return) if CTS has changed since
-  // 1. last read of the MSR register
-  // 2. return from this event
-  KE_INTR_MARKLIN_CTS,
-};
-
 extern void ke_exit();
 extern void ke_yield();
 extern int ke_create(int priority, const char * args, size_t args_len);
@@ -68,7 +55,7 @@ extern int ke_register_as(const char *name);
 -1  invalid event
 -2 corrupted volatile data
 */
-extern int ke_await_event(enum keIntrId event_type);
+extern int ke_await_event(uint32_t irq);
 
 /*
 >=0 time in ticks since the clock server initialized.

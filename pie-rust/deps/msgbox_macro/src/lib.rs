@@ -55,7 +55,7 @@ pub fn derive_msg_trait(input: TokenStream) -> TokenStream {
 
     let struct_name = syn_item.ident;
     let struct_name_str = struct_name.to_string();
-    let generics = syn_item.generics;
+    let _generics = syn_item.generics;
 
     let struct_name_str_total_len = (struct_name_str.len() + 8) & !7; // Adding the null term
 

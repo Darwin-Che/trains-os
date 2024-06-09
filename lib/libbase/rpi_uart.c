@@ -47,6 +47,16 @@ static const uint32_t UART_LCRH_FEN = 0x10;
 static const uint32_t UART_LCRH_WLEN_LOW = 0x20;
 static const uint32_t UART_LCRH_WLEN_HIGH = 0x40;
 
+static const uint32_t UART_IMSC_CTSMIM = 0x2;
+static const uint32_t UART_IMSC_RXIM = 0x10;
+static const uint32_t UART_IMSC_TXIM = 0x20;
+static const uint32_t UART_IMSC_RTIM = 0x40;
+static const uint32_t UART_IMSC_FEIM = 0x80;
+static const uint32_t UART_IMSC_PEIM = 0x100;
+static const uint32_t UART_IMSC_BEIM = 0x200;
+static const uint32_t UART_IMSC_OEIM = 0x400;
+static const uint32_t UART_IMSC_FULL = 0x7F2;
+
 static const uint32_t UARTCLK = 48000000;
 
 /*
@@ -72,19 +82,19 @@ static const struct UART_PINS uart_pins_arr[6] = {
   {.TX = 12, .RX = 13, .setting = GPIO_ALTFN4, .resistor = GPIO_NONE},
 };
 
-volatile struct UART * uart_from_id(uint8_t id)
+volatile struct UART * uart_from_id(uint32_t id)
 {
-  return (volatile struct UART *) (0xfe201000 + 0x200 * (uint32_t) id);
+  return (volatile struct UART *) (0xfe201000 + 0x200 * id);
 }
 
-static void uart_setup_gpio(uint8_t id)
+static void uart_setup_gpio(uint32_t id)
 {
   const struct UART_PINS * pins = &uart_pins_arr[id];
   setup_gpio(pins->TX, pins->setting, pins->resistor);
   setup_gpio(pins->RX, pins->setting, pins->resistor);
 }
 
-void uart_init(uint8_t id, uint32_t baudrate)
+void uart_init(uint32_t id, uint32_t baudrate)
 {
   // Setup GPIO pins
   uart_setup_gpio(id);
@@ -109,7 +119,7 @@ void uart_init(uint8_t id, uint32_t baudrate)
   uart->CR = cr_state | UART_CR_UARTEN | UART_CR_TXE | UART_CR_RXE; // Enable RX and TX and FIFO
 }
 
-void uart_putc(uint8_t id, char c) {
+void uart_putc(uint32_t id, char c) {
   volatile struct UART * uart = uart_from_id(id);
   
   // wait until we can send
@@ -120,7 +130,7 @@ void uart_putc(uint8_t id, char c) {
   uart->DR=c;
 }
 
-char uart_getc(uint8_t id) {
+char uart_getc(uint32_t id) {
   volatile struct UART * uart = uart_from_id(id);
   char r;
 
@@ -133,4 +143,20 @@ char uart_getc(uint8_t id) {
   r = uart->DR;
   // convert carrige return to newline
   return r=='\r'?'\n':r;
+}
+
+void uart_intr_arm(uint32_t id) {
+  volatile struct UART * uart = uart_from_id(id);
+  uart->IMSC = UART_IMSC_FULL;
+}
+
+void uart_intr_unarm(uint32_t id) {
+  volatile struct UART * uart = uart_from_id(id);
+  uart->ICR = 0;
+  uart->IMSC = 0;
+}
+
+uint32_t uart_intr_status(uint32_t id) {
+  volatile struct UART * uart = uart_from_id(id);
+  return uart->MIS;
 }
