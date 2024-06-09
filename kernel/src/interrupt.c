@@ -35,28 +35,15 @@ struct PiGicC
 volatile struct PiGicD *pi_gicd = (struct PiGicD *)(PI_GIC_BASE + 0x1000);
 volatile struct PiGicC *pi_gicc = (struct PiGicC *)(PI_GIC_BASE + 0x2000);
 
-enum kUartIntrCode
-{
-  // SC 16 - Page 24, Table 14 - bits 5 - 1
-  UART_IIR_RECV_LINE_STATUS = 0x3,
-  UART_IIR_RECV_TIMEOUT = 0x6,
-  UART_IIR_RHR = 0x2,
-  UART_IIR_THR = 0x1,
-  UART_IIR_MODEM = 0x0,
-  UART_IIR_INPUT_PIN_STATE_CHANGE = 0x18,
-  UART_IIR_XOFF_SIGNAL = 0x8,
-  UART_IIR_CTS_RTS_CHANGE = 0x10,
-};
-
 void k_gic_enable()
 {
   // GIC_INTR_ID_TIMER = 3 * 32 + 1
   pi_gicd->GICD_ISENABLERn[(GIC_INTR_ID_TIMER / 32)] |= (0x1 << (GIC_INTR_ID_TIMER % 32));
-  // GIC_INTR_GPIO_0 (bank 0) = 4 * 32 + 17
-  pi_gicd->GICD_ISENABLERn[(GIC_INTR_ID_GPIO_0 / 32)] |= (0x1 << (GIC_INTR_ID_GPIO_0 % 32));
+  // GIC_INTR_UART (bank 0) = 4 * 32 + 25 = 153
+  pi_gicd->GICD_ISENABLERn[(GIC_INTR_ID_UART / 32)] |= (0x1 << (GIC_INTR_ID_UART % 32));
   // target interrupt to core 0
   pi_gicd->GICD_ITARGETSRn[GIC_INTR_ID_TIMER] |= (0x1 << 0);
-  pi_gicd->GICD_ITARGETSRn[GIC_INTR_ID_GPIO_0] |= (0x1 << 0);
+  pi_gicd->GICD_ITARGETSRn[GIC_INTR_ID_UART] |= (0x1 << 0);
 
   pi_gicd->GICD_CTLR = 0x1; // only enables group 0 interrupts but not group 1 interrupts
   pi_gicc->GICC_CTLR = 0x1; // forwards group 1 interrupts - i think does nothing
@@ -72,16 +59,17 @@ static inline void k_gic_eoir(uint32_t id)
   pi_gicc->GICC_EOIR = id;
 }
 
-static inline int k_intr_wakeup_tasks(enum keIntrId intr_id)
+static inline int k_intr_wakeup_tasks(uint32_t intr_id, uint32_t retval)
 {
   struct kTaskDsp *td, *tmp;
   uint8_t number_of_events_triggered = 0;
 
   DL_FOREACH_SAFE2(kg_gs->scheduler.event_blocked, td, tmp, next_sched)
   {
-    if ((enum keIntrId)td->state == intr_id)
+    if (td->state == intr_id)
     {
       k_sched_remove_event_wait(&kg_gs->scheduler, td);
+      td->syscall_retval = retval;
       k_sched_add_ready(&kg_gs->scheduler, td);
       number_of_events_triggered += 1;
     }
@@ -106,7 +94,7 @@ static inline void process_intr_timer()
   k_intr_timer_unarm();
 
   // Wake up the clock notifier
-  k_intr_wakeup_tasks(KE_INTR_TIMER);
+  k_intr_wakeup_tasks(INTR_ID_TIMER, 0);
 }
 
 // static inline bool process_iir_val(enum UartChnlId channel, int iir_val)
@@ -216,6 +204,27 @@ static inline void process_intr_timer()
 //   return false;
 // }
 
+static inline void process_intr_uart_id(uint32_t uart_id)
+{
+  uint32_t status = uart_intr_status(uart_id);
+  if (status != 0) {
+    // turnoff interrupt
+    k_intr_uart_unarm(uart_id);
+
+    // wakeup tasks
+    k_intr_wakeup_tasks(INTR_ID_UART(uart_id), status);
+  }
+}
+
+static inline void process_intr_uart()
+{
+  process_intr_uart_id(0);
+  process_intr_uart_id(2);
+  process_intr_uart_id(3);
+  process_intr_uart_id(4);
+  process_intr_uart_id(5);
+}
+
 // static inline void process_intr_uart(char iir_term, char iir_marklin)
 // {
 //   DEBUG_PRINT("Kernel Process Uart Interrupt\r\n");
@@ -236,6 +245,7 @@ static inline void process_intr_timer()
 
 void k_intr_handler()
 {
+  DEBUG_PRINT("k_intr_handler!!\r\n");
   while (1)
   {
     uint32_t id = k_gic_iar();
@@ -244,6 +254,10 @@ void k_intr_handler()
       DEBUG_PRINT("Got interrupt from TIMER!! \r\n");
       // Process the timer & turn off interrupt
       process_intr_timer();
+    }
+    else if (id == GIC_INTR_ID_UART)
+    {
+      process_intr_uart();
     }
     // else if (id == GIC_INTR_ID_GPIO_0)
     // {

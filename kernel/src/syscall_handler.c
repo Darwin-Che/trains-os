@@ -155,40 +155,25 @@ void k_reply_handler(int tid, const char *reply, size_t rplen)
   }
 }
 
-void k_await_event_handler(enum keIntrId evt)
+void k_await_event_handler(uint32_t intr_id)
 {
-  DEBUG_PRINT("evt = %d\r\n", evt);
-  if (evt == KE_INTR_TIMER)
+  DEBUG_PRINT("intr_id = %x\r\n", intr_id);
+  uint32_t gic_id = INTR_ID_GIC(intr_id);
+  if (gic_id == 97)
   {
     k_intr_timer_arm();
   }
-  // else if (evt == KE_INTR_MARKLIN_INPUT)
-  // {
-  //   k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_RHR);
-  // }
-  // else if (evt == KE_INTR_MARKLIN_OUTPUT)
-  // {
-  //   k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_THR);
-  // }
-  // else if (evt == KE_INTR_MARKLIN_CTS)
-  // {
-  //   k_intr_uart_arm(MARKLIN_CHANNEL, UART_IER_MODEM);
-  // }
-  // else if (evt == KE_INTR_TERM_INPUT)
-  // {
-  //   k_intr_uart_arm(TERM_CHANNEL, UART_IER_RHR);
-  // }
-  // else if (evt == KE_INTR_TERM_OUTPUT)
-  // {
-  //   k_intr_uart_arm(TERM_CHANNEL, UART_IER_THR);
-  // }
+  else if (gic_id == 153)
+  {
+    k_intr_uart_arm(INTR_ID_SUB(intr_id));
+  }
   else
   {
     kg_current_td->syscall_retval = -1;
     return;
   }
 
-  k_sched_add_event_wait(&kg_gs->scheduler, kg_current_td, evt);
+  k_sched_add_event_wait(&kg_gs->scheduler, kg_current_td, intr_id);
   kg_current_td = NULL;
 }
 
@@ -234,7 +219,7 @@ void k_print_raw(const char * msg, int len)
   // printf("ke_print_raw %p %d\r\n", msg, len);
   if (msg != NULL) {
     for (int i = 0; i < len; i += 1)
-      uart_putc(0, msg[i]);
+      uart_putc(2, msg[i]);
     // for (int i = 0; i < len; i += 1)
     //   printf("msg[%d] = %d\r\n", i, (int) msg[i]);
   }

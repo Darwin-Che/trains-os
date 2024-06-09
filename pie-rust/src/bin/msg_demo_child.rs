@@ -15,12 +15,14 @@ fn panic(info: &PanicInfo) -> ! {
 
 #[repr(C)]
 #[derive(Debug, Default)]
+#[allow(dead_code)]
 struct Embed {
     embed: u64,
 }
 
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
+#[allow(dead_code)]
 struct MsgDemoReq1<'a> {
     // Please use 'a for the lifetime if needed, MsgTrait relies on it
     simple_field: u64,
@@ -29,6 +31,7 @@ struct MsgDemoReq1<'a> {
 
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
+#[allow(dead_code)]
 struct MsgDemoReq2<'a> {
     array_field: AttachedArray<'a, Embed>,
 }
@@ -41,6 +44,7 @@ struct MsgDemoResp {
 }
 
 #[derive(Debug, RecvEnumTrait)]
+#[allow(dead_code)]
 enum RecvEnum<'a> {
     MsgDemoReq1(&'a MsgDemoReq1<'a>),
     MsgDemoReq2(&'a MsgDemoReq2<'a>),

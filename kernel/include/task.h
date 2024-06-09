@@ -85,7 +85,7 @@ struct kTaskDsp
   uint32_t stack_sz; // The count of bytes
   int64_t tid;       // tid should only be negative after process is destroyed
   struct kPriorityKey priority_key;
-  enum kTaskState state;
+  uint32_t state; // enum kTaskState
 
   int64_t parent_tid;
 

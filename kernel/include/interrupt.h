@@ -4,6 +4,7 @@
 #include "debug_print.h"
 #include "global_state.h"
 #include "lib/include/timer.h"
+#include "lib/include/rpi.h"
 
 #ifdef DEBUG
 #define INTERRUPT_QUANTUM (5 * 1000 * 1000) // us
@@ -15,7 +16,14 @@
 
 #define GIC_INTR_ID_TIMER 97
 #define GIC_INTR_ID_GPIO_0 145 // 96 - videocore base for gic 400, 49 - gic 0
+#define GIC_INTR_ID_UART 153
 #define GIC_INTR_ID_NONE 1023
+
+#define INTR_ID_GIC(id) (id >> 16)
+#define INTR_ID_SUB(id) (id & 0xFFFF)
+
+#define INTR_ID_TIMER (GIC_INTR_ID_TIMER << 16)
+#define INTR_ID_UART(id) ((GIC_INTR_ID_UART << 16) + (id))
 
 enum kUartIER {
   UART_IER_RHR = (0x1 << 0),
@@ -52,5 +60,13 @@ static inline void k_intr_timer_arm() {
 }
 
 static inline void k_intr_timer_unarm() { time_intr_reset(); }
+
+static inline void k_intr_uart_arm(uint32_t uart_id) {
+  uart_intr_arm(uart_id);
+}
+
+static inline void k_intr_uart_unarm(uint32_t uart_id) {
+  uart_intr_unarm(uart_id);
+}
 
 #endif

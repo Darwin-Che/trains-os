@@ -65,9 +65,12 @@ void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor);
 
 /* UART */
 
-void uart_init(uint8_t id, uint32_t baudrate);
-void uart_putc(uint8_t id, char c);
-char uart_getc(uint8_t id);
+void uart_init(uint32_t id, uint32_t baudrate);
+void uart_putc(uint32_t id, char c);
+char uart_getc(uint32_t id);
+void uart_intr_arm(uint32_t id);
+void uart_intr_unarm(uint32_t id);
+uint32_t uart_intr_status(uint32_t id);
 
 /* TERM */
 

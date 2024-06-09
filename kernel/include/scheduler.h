@@ -92,9 +92,9 @@ static inline void k_sched_remove_recv_wait(struct kScheduler *sched,
 
 static inline void k_sched_add_event_wait(struct kScheduler *sched,
                                           struct kTaskDsp *td,
-                                          enum keIntrId intr_id) {
+                                          uint32_t intr_id) {
   DL_APPEND2(sched->event_blocked, td, prev_sched, next_sched);
-  td->state = (enum kTaskState)intr_id;
+  td->state = intr_id;
 }
 
 static inline void k_sched_remove_event_wait(struct kScheduler *sched,

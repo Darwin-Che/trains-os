@@ -72,5 +72,23 @@ SECTIONS {
     pie-rust/build/name_server_demo_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(rpi_elf_start = .);
+  .rpi_elf : {
+    pie-rust/build/rpi_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(rpi_uart_rx_elf_start = .);
+  .rpi_uart_rx_elf : {
+    pie-rust/build/rpi_uart_rx_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(rpi_uart_intr_broker_elf_start = .);
+  .rpi_uart_intr_broker_elf : {
+    pie-rust/build/rpi_uart_intr_broker_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }

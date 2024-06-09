@@ -1,4 +1,4 @@
-PROGRAMS=user_entry msg_demo msg_demo_child name_server name_server_demo
+PROGRAMS=user_entry msg_demo msg_demo_child name_server name_server_demo rpi rpi_uart_rx rpi_uart_intr_broker
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 
 all: $(PROGRAMS_ELF)
