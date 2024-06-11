@@ -34,8 +34,7 @@ pub extern "C" fn _start() {
     {
         let mut init_req = SendCtx::<RpiUartIntr>::new(&mut send_box).unwrap();
         init_req.uart_id = 0;
-        init_req.rx = true;
-        init_req.tx = true;
+        init_req.mis = 0;
     }
 
     loop {
@@ -49,38 +48,21 @@ pub extern "C" fn _start() {
             Some(RecvEnum::RpiUartIntr(ask)) => {
                 let mut req = SendCtx::<RpiUartIntr>::new(&mut send_box).unwrap();
                 req.uart_id = ask.uart_id;
-                req.rx = ask.rx;
-                req.tx = ask.tx;
 
                 // Wait for UART Interrupt
-                loop {
-                    if DEBUG {
-                        println!("rpi_uart_intr_broker start uart_id={}", ask.uart_id);
-                    }
-
-                    let status = ker_await_uart(ask.uart_id).unwrap();
-
-                    if DEBUG {
-                        println!("rpi_uart_intr_broker end uart_id={} status={:X?}", ask.uart_id, status);
-                    }
-
-                    if ask.rx && status_is_rx(status) {
-                        break;
-                    }
-                    if ask.tx && status_is_tx(status) {
-                        break;
-                    }
+                if DEBUG {
+                    println!("rpi_uart_intr_broker start uart_id={}", ask.uart_id);
                 }
+
+                let status = ker_await_uart(ask.uart_id).unwrap();
+
+                if DEBUG {
+                    println!("rpi_uart_intr_broker end uart_id={} status={:X?}", ask.uart_id, status);
+                }
+
+                req.mis = status;
             },
             _ => panic!("Rpi Uart Intr Broker : Received Invalid Message From Parent"),
         }
     }
-}
-
-fn status_is_rx(status: u32) -> bool {
-    true
-}
-
-fn status_is_tx(status: u32) -> bool {
-    true
 }

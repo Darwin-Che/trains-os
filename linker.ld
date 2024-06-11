@@ -79,9 +79,9 @@ SECTIONS {
   }
 
   . = ALIGN(0x10000); /* 2^16 = 64KB */
-  PROVIDE(rpi_uart_rx_elf_start = .);
-  .rpi_uart_rx_elf : {
-    pie-rust/build/rpi_uart_rx_elf.o (.*)
+  PROVIDE(rpi_uart_elf_start = .);
+  .rpi_uart_elf : {
+    pie-rust/build/rpi_uart_elf.o (.*)
   }
 
   . = ALIGN(0x10000); /* 2^16 = 64KB */

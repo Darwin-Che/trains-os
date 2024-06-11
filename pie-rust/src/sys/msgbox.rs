@@ -224,6 +224,16 @@ impl<'a, I> DerefMut for AttachedArray<'a, I> {
     }
 }
 
+impl<'a> Write for AttachedArray<'a, u8> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        self.array.as_mut().unwrap()
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        Ok(())
+    }
+}
+
 /* Syscall Wrapper */
 
 #[link(name = "syscall")]

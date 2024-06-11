@@ -94,7 +94,7 @@ static void calc_mem_size(const struct ElfReader *elf_reader, uint64_t *vaddr_ba
 
 /* Public Functions */
 
-void load_elf(const char *args, uint64_t args_len)
+void load_elf(const char *args, size_t args_len)
 {
   DEBUG_LOADER_PRINTF("args = %p, args_len = %llu\r\n", args, args_len);
 
