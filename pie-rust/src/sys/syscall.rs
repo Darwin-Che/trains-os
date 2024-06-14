@@ -7,6 +7,13 @@ extern "C" {
     fn ke_my_parent_tid() -> c_int;
     fn ke_my_tid() -> c_int;
     fn ke_await_event(intr_id: u32) -> c_int;
+    fn ke_exit();
+}
+
+pub fn ker_exit() {
+    unsafe {
+        ke_exit();
+    }
 }
 
 pub fn ker_create(priority: i32, args: &[u8]) -> Result<Tid, i32> {

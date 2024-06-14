@@ -25,6 +25,7 @@ struct ElfReader
   const Elf64_Shdr * s_hdr_symtab;
   const Elf64_Shdr * s_hdr_strtab;
   const Elf64_Shdr * s_hdr_shstrtab;
+  const Elf64_Shdr * s_hdr_bss;
 
   /* Program Headers */
   const Elf64_Phdr * p_hdr_arr;

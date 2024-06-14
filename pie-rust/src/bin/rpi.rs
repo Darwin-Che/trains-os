@@ -1,15 +1,19 @@
 #![no_std]
 #![no_main]
+#![feature(sync_unsafe_cell)]
 
 use core::panic::PanicInfo;
 
 use rust_pie::println;
-use rust_pie::log::Logger;
+use rust_pie::sys::log::Logger;
 use rust_pie::log;
 
 use rust_pie::sys::syscall::*;
 use rust_pie::sys::rpi::RpiUart;
 use rust_pie::api::rpi_uart::*;
+use rust_pie::api::name_server::*;
+
+use core::cell::SyncUnsafeCell;
 
 /// This function is called on panic.
 #[panic_handler]
@@ -29,37 +33,38 @@ enum RecvEnum<'a> {
 #[no_mangle]
 pub extern "C" fn _start() {
     ker_create(2, b"PROGRAM\0rpi_uart\0ID\02\0").unwrap();
-    let rx_tid = ker_create(2, b"PROGRAM\0rpi_uart\0ID\04\0").unwrap();
+    ker_create(2, b"PROGRAM\0rpi_uart\0ID\00\0").unwrap();
+    ker_create(2, b"PROGRAM\0rpi_bluetooth\0").unwrap();
 
-    let mut arr = [[0; 19]; 100];
-    let mut recv_box: RecvBox = RecvBox::default();
-    let mut send_box: SendBox = SendBox::default();
+    // let mut recv_box: RecvBox = RecvBox::default();
+    // let mut send_box: SendBox = SendBox::default();
 
-    {
-        let mut req = SendCtx::<RpiUartRxReq>::new(&mut send_box).unwrap();
-        req.len = 19;
-    }
+    // let mut arr = [[0; 19]; 100];
+    // let rx_tid = ker_create(2, b"PROGRAM\0rpi_uart\0ID\04\0").unwrap();
 
-    for i in 0..100 {
-        ker_send(rx_tid, &send_box, &mut recv_box).unwrap();
+    // {
+    //     let mut req = SendCtx::<RpiUartRxReq>::new(&mut send_box).unwrap();
+    //     req.len = 19;
+    // }
 
-        match RecvEnum::from_recv_bytes(&mut recv_box) {
-            Some(RecvEnum::RpiUartRxResp(resp)) => {
-                for j in 0..19 {
-                    arr[i][j] = resp.bytes[j];
-                }
-            },
-            None => println!("Rpi Uart Rx : Received None !"),
-        };
-    }
+    // for i in 0..100 {
+    //     ker_send(rx_tid, &send_box, &mut recv_box).unwrap();
 
-    for i in 0..100 {
-        println!("{:X?}", arr[i]);
-    }
+    //     match RecvEnum::from_recv_bytes(&mut recv_box) {
+    //         Some(RecvEnum::RpiUartRxResp(resp)) => {
+    //             for j in 0..19 {
+    //                 arr[i][j] = resp.bytes[j];
+    //             }
+    //         },
+    //         None => println!("Rpi Uart Rx : Received None !"),
+    //     };
+    // }
 
-    let mut logger = Logger::new();
+    // for i in 0..100 {
+    //     println!("{:X?}", arr[i]);
+    // }
 
-    for i in 0..100 {
-        log!(logger, "COPY {:X?}", arr[i]);
-    }
+    // for i in 0..100 {
+    //     log!("COPY {:X?}", arr[i]);
+    // }
 }

@@ -12,12 +12,13 @@ use rust_pie::sys::entry_args::*;
 use heapless::Deque;
 use heapless::String;
 
-const DEBUG: bool = false;
+const DEBUG: bool = true;
 
 /// This function is called on panic.
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
+    ker_exit();
     loop {}
 }
 
@@ -50,7 +51,7 @@ struct State {
 
     // RxState
     rx_queue: Deque::<RxReq, 128>,
-    rx_buf: Deque::<u8, 1024>,
+    rx_buf: Deque::<u8, 2048>,
 
     // TxState
     tx_buf: Deque::<u8, 2048>,
@@ -58,10 +59,13 @@ struct State {
 
 impl State {
     pub fn new(uart_id: u32, baudrate: u64) -> Self {
+        let mut rpi_uart = RpiUart::new(uart_id, baudrate);
+        rpi_uart.drain();
+
         Self {
             uart_id: uart_id,
             reply_box: SendBox::new(),
-            rpi_uart: RpiUart::new(uart_id, baudrate),
+            rpi_uart: rpi_uart,
             tid_intr: ker_create(2, b"PROGRAM\0rpi_uart_intr_broker\0").unwrap(),
             rx_queue: Deque::new(),
             rx_buf: Deque::new(),

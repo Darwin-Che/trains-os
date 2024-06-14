@@ -51,6 +51,7 @@ typedef struct
 #define SHT_RELA 4
 #define SHT_HASH 5
 #define SHT_DYNAMIC 6
+#define SHT_NOBITS 8
 #define SHT_REL 9
 #define SHT_DYNSYM 11
 
