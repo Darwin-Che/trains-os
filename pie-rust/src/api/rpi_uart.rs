@@ -17,8 +17,18 @@ pub struct RpiUartRxResp<'a> {
 
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
+pub struct RpiUartTxReq<'a> {
+    pub bytes: AttachedArray<'a, u8>,
+}
+
+#[repr(C)]
+#[derive(Debug, Default, MsgTrait)]
+pub struct RpiUartTxResp {
+}
+
+#[repr(C)]
+#[derive(Debug, Default, MsgTrait)]
 pub struct RpiUartIntr {
     pub uart_id: u32,
-    pub rx: bool,
-    pub tx: bool,
+    pub mis: u32,
 }

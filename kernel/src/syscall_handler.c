@@ -158,20 +158,20 @@ void k_reply_handler(int tid, const char *reply, size_t rplen)
 void k_await_event_handler(uint32_t intr_id)
 {
   DEBUG_PRINT("intr_id = %x\r\n", intr_id);
-  uint32_t gic_id = INTR_ID_GIC(intr_id);
-  if (gic_id == 97)
-  {
-    k_intr_timer_arm();
-  }
-  else if (gic_id == 153)
-  {
-    k_intr_uart_arm(INTR_ID_SUB(intr_id));
-  }
-  else
-  {
-    kg_current_td->syscall_retval = -1;
-    return;
-  }
+  // uint32_t gic_id = INTR_ID_GIC(intr_id);
+  // if (gic_id == 97)
+  // {
+  //   k_intr_timer_arm();
+  // }
+  // else if (gic_id == 153)
+  // {
+  //   k_intr_uart_arm(INTR_ID_SUB(intr_id));
+  // }
+  // else
+  // {
+  //   kg_current_td->syscall_retval = -1;
+  //   return;
+  // }
 
   k_sched_add_event_wait(&kg_gs->scheduler, kg_current_td, intr_id);
   kg_current_td = NULL;

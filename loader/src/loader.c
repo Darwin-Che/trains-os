@@ -92,9 +92,17 @@ static void calc_mem_size(const struct ElfReader *elf_reader, uint64_t *vaddr_ba
   *memsz = max_addr - *vaddr_base;
 }
 
+static void clear_bss(const struct ElfReader *elf_reader, int64_t vaddr_diff)
+{
+  if (elf_reader->s_hdr_bss != NULL) {
+    uint64_t dest = elf_reader->s_hdr_bss->sh_addr + vaddr_diff;
+    util_memset((void*) dest, 0x0, elf_reader->s_hdr_bss->sh_size);
+  }
+}
+
 /* Public Functions */
 
-void load_elf(const char *args, uint64_t args_len)
+void load_elf(const char *args, size_t args_len)
 {
   DEBUG_LOADER_PRINTF("args = %p, args_len = %llu\r\n", args, args_len);
 
@@ -133,6 +141,10 @@ void load_elf(const char *args, uint64_t args_len)
   // Step 3 : memcpy all of the program header sections into the memory
   DEBUG_LOADER_PRINTF("Step 3 : MEMCPY\r\n");
   memcpy_prog_hdr(&elf_reader, vaddr_diff);
+
+  // Step 3.1 : clear bss section
+  DEBUG_LOADER_PRINTF("Step 3.1 : Clear Bss\r\n");
+  clear_bss(&elf_reader, vaddr_diff);
   
   // Step 4 : apply any relocations
   DEBUG_LOADER_PRINTF("Step 4 : Relocations\r\n");

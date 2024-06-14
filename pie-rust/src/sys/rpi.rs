@@ -21,23 +21,36 @@ const GPIO_RESISTOR_PDP : GpioResistor = 0x02;
 extern "C" {
     // void uart_init(uint32_t id, uint32_t baudrate);
     fn uart_init(id: u32, baudrate: u32);
+    // void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor)
+    fn setup_gpio(pin: u32, setting: u32, resistor: u32);
 }
 
-// fn setup_gpio(pin: u32, setting: GpioSetting, resistor: GpioResistor) {
-//     let reg: u32 = pin / 10;
-//     let shift: u32 = (pin % 10) * 3;
-//     uint32_t status = gpio->GPFSEL[reg]; // read status
-//     status &= ~(7u << shift);            // clear bits
-//     status |= (setting << shift);        // set bits
-//     gpio->GPFSEL[reg] = status;          // write back
-  
-//     reg = pin / 16;
-//     shift = (pin % 16) * 2;
-//     status = gpio->PUP_PDN_CNTRL_REG[reg]; // read status
-//     status &= ~(3u << shift);              // clear bits
-//     status |= (resistor << shift);         // set bits
-//     gpio->PUP_PDN_CNTRL_REG[reg] = status; // write back
-// }
+const UART_CLK: u64 = 48000000;
+
+const UART_CR_UARTEN: u32 = 0x01;
+const UART_CR_LBE: u32 = 0x80;
+const UART_CR_TXE: u32 = 0x100;
+const UART_CR_RXE: u32 = 0x200;
+const UART_CR_RTS: u32 = 0x800;
+const UART_CR_RTSEN: u32 = 0x4000;
+const UART_CR_CTSEN: u32 = 0x8000;
+
+const UART_LCRH_PEN: u32 = 0x2;
+const UART_LCRH_EPS: u32 = 0x4;
+const UART_LCRH_STP2: u32 = 0x8;
+const UART_LCRH_FEN: u32 = 0x10;
+const UART_LCRH_WLEN_LOW: u32 = 0x20;
+const UART_LCRH_WLEN_HIGH: u32 = 0x40;
+
+const UART_IMSC_CTSMIM: u32 = 0x2;
+const UART_IMSC_RXIM: u32 = 0x10;
+const UART_IMSC_TXIM: u32 = 0x20;
+const UART_IMSC_RTIM: u32 = 0x40;
+const UART_IMSC_FEIM: u32 = 0x80;
+const UART_IMSC_PEIM: u32 = 0x100;
+const UART_IMSC_BEIM: u32 = 0x200;
+const UART_IMSC_OEIM: u32 = 0x400;
+const UART_IMSC_FULL: u32 = 0x7F2;
 
 #[repr(C)]
 pub struct RpiUart {
@@ -48,15 +61,15 @@ pub struct RpiUart {
     pub FR: RW<u32>,
     FR_unused: [u8; 4],
     pub ILPR: u32,
-    pub IBRD: u32,
-    pub FBRD: u32,
-    pub LCRH: u32,
-    pub CR: u32,
+    pub IBRD: RW<u32>,
+    pub FBRD: RW<u32>,
+    pub LCRH: RW<u32>,
+    pub CR: RW<u32>,
     pub IFLS: u32,
-    pub IMSC: u32,
+    pub IMSC: RW<u32>,
     pub RIS: u32,
     pub MIS: u32,
-    pub ICR: u32,
+    pub ICR: RW<u32>,
     pub DMACR: u32,
     DMACR_unused: [u8; 52],
     pub ITCR: u32,
@@ -65,12 +78,55 @@ pub struct RpiUart {
     pub TDR: u32,
 }
 
+#[derive(Default)]
+struct RpiUartGpioPins {
+    pub tx: u32,
+    pub rx: u32,
+    pub cts: u32,
+    pub rts: u32,
+    pub setting: u32,
+    pub resistor: u32,
+}
+
+static RPI_UART_GPIO_PINS: &'static [RpiUartGpioPins] = &[
+    RpiUartGpioPins{tx: 32, rx: 33, cts: 30, rts: 31, setting: GPIO_SETTING_ALTFN3, resistor: GPIO_RESISTOR_NONE},
+    RpiUartGpioPins{tx: 14, rx: 15, cts: 16, rts: 17, setting: GPIO_SETTING_ALTFN5, resistor: GPIO_RESISTOR_NONE},
+    RpiUartGpioPins{tx: 0, rx: 1, cts: 2, rts: 3, setting: GPIO_SETTING_ALTFN4, resistor: GPIO_RESISTOR_NONE},
+    RpiUartGpioPins{tx: 4, rx: 5, cts: 6, rts: 7, setting: GPIO_SETTING_ALTFN4, resistor: GPIO_RESISTOR_NONE},
+    RpiUartGpioPins{tx: 8, rx: 9, cts: 10, rts: 11, setting: GPIO_SETTING_ALTFN4, resistor: GPIO_RESISTOR_NONE},
+    RpiUartGpioPins{tx: 12, rx: 13, cts: 14, rts: 15, setting: GPIO_SETTING_ALTFN4, resistor: GPIO_RESISTOR_NONE},
+];
+
 impl RpiUart {
-    pub fn new(uart_id: u32, baudrate: u32) -> &'static mut RpiUart {
+    pub fn new(uart_id: u32, baudrate: u64) -> &'static mut RpiUart {
+        assert!(uart_id != 1);
+
+        // Setup GPIO
+        let pins = &RPI_UART_GPIO_PINS[uart_id as usize];
+
         unsafe {
-            uart_init(uart_id, baudrate);
-            &mut *((0xfe201000 + 0x200 * uart_id) as *mut RpiUart)
+            setup_gpio(pins.tx, pins.setting, pins.resistor);
+            setup_gpio(pins.rx, pins.setting, pins.resistor);
+            setup_gpio(pins.cts, pins.setting, pins.resistor);
+            setup_gpio(pins.rts, pins.setting, pins.resistor);
         }
+
+        let uart = unsafe {
+            &mut *((0xfe201000 + 0x200 * uart_id) as *mut RpiUart)
+        };
+
+        let baud_divisor = ((UART_CLK * 4) / baudrate) as u32;
+
+        unsafe {
+            uart.CR.write(0x0);
+            uart.ICR.write(0x0);
+            uart.LCRH.write(UART_LCRH_WLEN_HIGH | UART_LCRH_WLEN_LOW | UART_LCRH_FEN);
+            uart.IBRD.write(baud_divisor >> 6);
+            uart.FBRD.write(baud_divisor & 0x3f);
+            uart.CR.write(UART_CR_UARTEN | UART_CR_TXE | UART_CR_RXE | UART_CR_RTS);
+        }
+
+        uart
     }
 
     pub fn drain(&self) {
@@ -84,6 +140,33 @@ impl RpiUart {
             None
         } else {
             Some(self.DR.read())
+        }
+    }
+
+    pub fn putc(&self, c: u8) -> Option<u8> {
+        if self.FR.read() & 0x20 != 0 {
+            None
+        } else {
+            unsafe {
+                self.DR.write(c);
+            }
+            Some(c)
+        }
+    }
+
+    pub fn arm_rx(&self) {
+        let mut status = self.IMSC.read();
+        status = status | (UART_IMSC_RXIM | UART_IMSC_RTIM);
+        unsafe {
+            self.IMSC.write(status);
+        }
+    }
+
+    pub fn arm_tx(&self) {
+        let mut status = self.IMSC.read();
+        status = status | UART_IMSC_TXIM;
+        unsafe {
+            self.IMSC.write(status);
         }
     }
 }

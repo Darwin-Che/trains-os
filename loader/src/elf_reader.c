@@ -173,6 +173,10 @@ static void elf_reader_ctr_section(struct ElfReader * elf_reader, const Elf64_Sh
       elf_reader->s_hdr_dynamic = s_hdr;
     break;
 
+  case SHT_NOBITS:
+    DEBUG_LOADER_PRINTF("SHT_NOBITS %s\r\n", sh_name);
+    elf_reader->s_hdr_bss = s_hdr;
+
   case SHT_REL:
     DEBUG_LOADER_PRINTF("SHT_REL %s\r\n", sh_name);
     break;
