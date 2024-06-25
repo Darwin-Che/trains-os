@@ -1,5 +1,4 @@
 use volatile_register::{RW, RO};
-use core::arch::asm;
 
 type GpioSetting = u32;
 type GpioResistor = u32;
@@ -167,6 +166,44 @@ impl RpiUart {
         status = status | UART_IMSC_TXIM;
         unsafe {
             self.IMSC.write(status);
+        }
+    }
+}
+
+#[repr(C)]
+pub struct RpiClock {
+    pub CS: RW<u32>,
+    pub CLO: RW<u32>,
+    pub CHI: RW<u32>,
+    pub C0: RW<u32>,
+    pub C1: RW<u32>,
+    pub C2: RW<u32>,
+    pub C3: RW<u32>,
+}
+
+impl RpiClock {
+    pub fn new() -> &'static mut RpiClock {
+        unsafe {
+            &mut *(0xFE003000 as *mut RpiClock)
+        }
+    }
+
+    pub fn cur_u64(&self) -> u64 {
+        let clo = self.CLO.read();
+        let chi = self.CHI.read();
+        ((chi as u64) << 32) | (clo as u64)
+    }
+
+    pub fn intr_arm(&self, future: u64) {
+        unsafe {
+            self.C1.write(future as u32);
+        }
+    }
+
+    pub fn intr_clear(&self) {
+        unsafe {
+            self.CS.write(self.CS.read() | (0x01 << 1));
+            self.C1.write(0);
         }
     }
 }

@@ -1,4 +1,4 @@
-PROGRAMS=user_entry msg_demo msg_demo_child name_server name_server_demo rpi rpi_uart rpi_uart_intr_broker rpi_bluetooth_commander rpi_bluetooth_hci_rx rpi_bluetooth_gatt
+PROGRAMS=user_entry msg_demo msg_demo_child name_server name_server_demo rpi rpi_uart rpi_uart_intr_broker rpi_bluetooth_commander rpi_bluetooth_hci_rx rpi_bluetooth_gatt clock_server
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 
 all: $(PROGRAMS_ELF)

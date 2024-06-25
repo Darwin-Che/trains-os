@@ -108,5 +108,11 @@ SECTIONS {
     pie-rust/build/rpi_bluetooth_gatt_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(clock_server_elf_start = .);
+  .clock_server_elf : {
+    pie-rust/build/clock_server_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }
