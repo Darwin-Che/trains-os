@@ -23,6 +23,12 @@ pub struct RpiUartTxReq<'a> {
 
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
+pub struct RpiUartTxBlockingReq<'a> {
+    pub bytes: AttachedArray<'a, u8>,
+}
+
+#[repr(C)]
+#[derive(Debug, Default, MsgTrait)]
 pub struct RpiUartTxResp {
 }
 

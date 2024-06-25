@@ -38,7 +38,6 @@ static GLOBAL_LOGGER: SyncUnsafeCell<Option<Logger>> = SyncUnsafeCell::new(None)
 impl Logger {
     pub fn new() -> Self {
         let tid = ns_get("rpi_uart_2");
-        println!("Logger::new() {:?}", tid);
         Self {
             logger_tid: tid.unwrap(),
             send_box: SendBox::new(),
@@ -48,15 +47,15 @@ impl Logger {
     }
 
     pub fn write_fmt(&mut self, args: fmt::Arguments) -> fmt::Result {
+        self.buffer.clear();
         self.buffer.write_fmt(args)?;
 
         {
-            let mut tx_req = SendCtx::<RpiUartTxReq>::new(&mut self.send_box).unwrap();
+            let mut tx_req = SendCtx::<RpiUartTxBlockingReq>::new(&mut self.send_box).unwrap();
             tx_req.bytes = tx_req.attach_array(self.buffer.len()).unwrap();
             tx_req.bytes.copy_from_slice(self.buffer.as_bytes());
         }
 
-        println!("Logger::write_fmt() {}", self.logger_tid);
         ker_send(self.logger_tid, &self.send_box, &mut self.recv_box).unwrap();
         Ok(())
     }

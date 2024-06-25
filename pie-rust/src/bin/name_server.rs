@@ -17,7 +17,7 @@ fn panic(info: &PanicInfo) -> ! {
     loop {}
 }
 
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 const MAP_CAP : usize = 128;
 type NameMap = FnvIndexMap::<u64, Tid, MAP_CAP>;
 
