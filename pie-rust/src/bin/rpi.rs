@@ -5,9 +5,14 @@
 use core::panic::PanicInfo;
 
 use rust_pie::println;
+use rust_pie::sys::log::Logger;
+use rust_pie::log;
 
 use rust_pie::sys::syscall::*;
 use rust_pie::api::rpi_uart::*;
+use rust_pie::api::name_server::*;
+
+use core::cell::SyncUnsafeCell;
 
 /// This function is called on panic.
 #[panic_handler]
