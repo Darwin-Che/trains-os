@@ -10,6 +10,9 @@ extern char name_server_demo_elf_start[];
 extern char rpi_elf_start[];
 extern char rpi_uart_elf_start[];
 extern char rpi_uart_intr_broker_elf_start[];
+extern char rpi_bluetooth_commander_elf_start[];
+extern char rpi_bluetooth_hci_rx_elf_start[];
+extern char rpi_bluetooth_gatt_elf_start[];
 
 static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "user_entry")) {
@@ -35,6 +38,15 @@ static const char * resolve_elf_start(const char * program_name) {
   }
   if (util_strcmp(program_name, "rpi_uart_intr_broker")) {
     return rpi_uart_intr_broker_elf_start;
+  }
+  if (util_strcmp(program_name, "rpi_bluetooth_commander")) {
+    return rpi_bluetooth_commander_elf_start;
+  }
+  if (util_strcmp(program_name, "rpi_bluetooth_hci_rx")) {
+    return rpi_bluetooth_hci_rx_elf_start;
+  }
+  if (util_strcmp(program_name, "rpi_bluetooth_gatt")) {
+    return rpi_bluetooth_gatt_elf_start;
   }
   return NULL;
 }

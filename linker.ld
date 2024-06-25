@@ -90,5 +90,23 @@ SECTIONS {
     pie-rust/build/rpi_uart_intr_broker_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(rpi_bluetooth_commander_elf_start = .);
+  .rpi_bluetooth_commander_elf : {
+    pie-rust/build/rpi_bluetooth_commander_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(rpi_bluetooth_hci_rx_elf_start = .);
+  .rpi_bluetooth_hci_rx_elf : {
+    pie-rust/build/rpi_bluetooth_hci_rx_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(rpi_bluetooth_gatt_elf_start = .);
+  .rpi_bluetooth_gatt_elf : {
+    pie-rust/build/rpi_bluetooth_gatt_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }

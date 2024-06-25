@@ -9,7 +9,6 @@ use rust_pie::sys::log::Logger;
 use rust_pie::log;
 
 use rust_pie::sys::syscall::*;
-use rust_pie::sys::rpi::RpiUart;
 use rust_pie::api::rpi_uart::*;
 use rust_pie::api::name_server::*;
 
@@ -34,7 +33,9 @@ enum RecvEnum<'a> {
 pub extern "C" fn _start() {
     ker_create(2, b"PROGRAM\0rpi_uart\0ID\02\0").unwrap();
     ker_create(2, b"PROGRAM\0rpi_uart\0ID\00\0").unwrap();
-    ker_create(2, b"PROGRAM\0rpi_bluetooth\0").unwrap();
+    ker_create(2, b"PROGRAM\0rpi_bluetooth_commander\0").unwrap();
+    ker_create(2, b"PROGRAM\0rpi_bluetooth_gatt\0").unwrap();
+    ker_create(2, b"PROGRAM\0rpi_bluetooth_hci_rx\0").unwrap();
 
     // let mut recv_box: RecvBox = RecvBox::default();
     // let mut send_box: SendBox = SendBox::default();

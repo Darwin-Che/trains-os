@@ -12,7 +12,7 @@ use rust_pie::sys::entry_args::*;
 use heapless::Deque;
 use heapless::String;
 
-const DEBUG: bool = true;
+const DEBUG: [u32; 0] = [];
 
 /// This function is called on panic.
 #[panic_handler]
@@ -27,6 +27,7 @@ fn panic(info: &PanicInfo) -> ! {
 enum RecvEnum<'a> {
     RpiUartRxReq(&'a mut RpiUartRxReq),
     RpiUartTxReq(&'a mut RpiUartTxReq<'a>),
+    RpiUartTxBlockingReq(&'a mut RpiUartTxBlockingReq<'a>),
     RpiUartIntr(&'a mut RpiUartIntr),
 }
 
@@ -39,8 +40,7 @@ struct RxReq {
 #[derive(Debug)]
 struct TxReq {
     pub tid: Tid,
-    pub len: usize,
-    pub cnt: usize,
+    pub end_at: u64,
 }
 
 struct State {
@@ -55,11 +55,15 @@ struct State {
 
     // TxState
     tx_buf: Deque::<u8, 2048>,
+
+    // TxBlocked
+    tx_queue: Deque::<TxReq, 128>,
+    tx_idx: u64,
 }
 
 impl State {
     pub fn new(uart_id: u32, baudrate: u64) -> Self {
-        let mut rpi_uart = RpiUart::new(uart_id, baudrate);
+        let rpi_uart = RpiUart::new(uart_id, baudrate);
         rpi_uart.drain();
 
         Self {
@@ -70,11 +74,13 @@ impl State {
             rx_queue: Deque::new(),
             rx_buf: Deque::new(),
             tx_buf: Deque::new(),
+            tx_queue: Deque::new(),
+            tx_idx: 0,
         }
     }
 
     pub fn handle_rx_req(&mut self, tid: Tid, len: u32) {
-        if DEBUG {
+        if DEBUG.contains(&self.uart_id) {
             println!("rpi_uart {} Rx Req tid={} len={}", self.uart_id, tid, len);
         }
 
@@ -83,32 +89,52 @@ impl State {
         self.read();
     }
 
-    pub fn handle_tx_req(&mut self, tid: Tid, bytes: &[u8]) {
-        if DEBUG {
-            println!("rpi_uart {} Tx Req tid={} len={}", self.uart_id, tid, bytes.len());
+    pub fn handle_tx_req(&mut self, tid: Tid, bytes: &[u8], blocking: bool) {
+        if DEBUG.contains(&self.uart_id) {
+            println!("rpi_uart {} Tx Req tid={} len={} blocking={}", self.uart_id, tid, bytes.len(), blocking);
         }
 
         for b in bytes {
             self.tx_buf.push_back(*b).unwrap();
         }
 
-        // reply
-        SendCtx::<RpiUartTxResp>::new(&mut self.reply_box).unwrap();
-        ker_reply(tid, &self.reply_box).unwrap();
+        if blocking {
+            self.tx_queue.push_back(TxReq{ tid: tid, end_at: self.tx_idx + self.tx_buf.len() as u64}).unwrap();
+        } else {
+            // reply
+            SendCtx::<RpiUartTxResp>::new(&mut self.reply_box).unwrap();
+            ker_reply(tid, &self.reply_box).unwrap();
+        }
 
         self.write();
     }
 
     pub fn write(&mut self) {
-        if DEBUG {
+        if DEBUG.contains(&self.uart_id) {
             println!("rpi_uart {} Tx Write", self.uart_id);
         }
 
         while self.tx_buf.len() != 0 {
             let ch = *self.tx_buf.front().unwrap();
-            if Some(ch) == self.rpi_uart.putc(ch) {
+            if self.rpi_uart.putc(ch).is_some() {
                 self.tx_buf.pop_front().unwrap();
+
+                self.tx_idx += 1;
+                
+                if self.tx_queue.front().is_some() && self.tx_queue.front().unwrap().end_at == self.tx_idx {
+                    if DEBUG.contains(&self.uart_id) {
+                        println!("rpi_uart {} Tx unblocks tx_idx={} tx_buf_len={} tx_queue_len={}",
+                                self.uart_id,
+                                self.tx_idx, self.tx_buf.len(), self.tx_queue.len());
+                    }
+                    let front = self.tx_queue.pop_front().unwrap();
+                    SendCtx::<RpiUartTxResp>::new(&mut self.reply_box).unwrap();
+                    ker_reply(front.tid, &self.reply_box).unwrap(); 
+                }
             } else {
+                if DEBUG.contains(&self.uart_id) {
+                    println!("rpi_uart {} Arm Tx at tx_idx={} tx_buf_len={} tx_queue_len={}", self.uart_id, self.tx_idx, self.tx_buf.len(), self.tx_queue.len());
+                }
                 self.rpi_uart.arm_tx();
                 break;
             }
@@ -116,7 +142,7 @@ impl State {
     }
 
     pub fn read(&mut self) {
-        if DEBUG {
+        if DEBUG.contains(&self.uart_id) {
             println!("rpi_uart {} Rx Read", self.uart_id);
         }
 
@@ -142,10 +168,14 @@ impl State {
                     resp.bytes[i] = self.rx_buf.pop_front().unwrap();
                 }
             }
-            if DEBUG {
+            if DEBUG.contains(&self.uart_id) {
                 println!("rpi_uart {} Rx Finished req from tid={}", self.uart_id, req.tid);
             }
             ker_reply(req.tid, &self.reply_box).unwrap();
+        }
+
+        if DEBUG.contains(&self.uart_id) {
+            println!("rpi_uart {} Rx Paused rx_buf_len={}", self.uart_id, self.rx_buf.len());
         }
     }
 
@@ -174,7 +204,7 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
     let mut name: String<32> = String::new();
     name.push_str("rpi_uart_").unwrap();
     name.push_str(uart_id_str).unwrap();
-    name_server::ns_set(name.as_str());
+    name_server::ns_set(name.as_str()).unwrap();
 
     let mut state = State::new(uart_id, 115200);
 
@@ -185,9 +215,10 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
 
         match RecvEnum::from_recv_bytes(&mut recv_box) {
             Some(RecvEnum::RpiUartRxReq(rx_req)) => state.handle_rx_req(sender_tid, rx_req.len),
-            Some(RecvEnum::RpiUartTxReq(tx_req)) => state.handle_tx_req(sender_tid, &tx_req.bytes),
+            Some(RecvEnum::RpiUartTxReq(tx_req)) => state.handle_tx_req(sender_tid, &tx_req.bytes, false),
+            Some(RecvEnum::RpiUartTxBlockingReq(tx_req)) => state.handle_tx_req(sender_tid, &tx_req.bytes, true),
             Some(RecvEnum::RpiUartIntr(intr)) => {
-                if DEBUG {
+                if DEBUG.contains(&uart_id) {
                     println!("rpi_uart {} Intr {:X?}", intr.uart_id, intr.mis);
                 }
                 state.rearm();
