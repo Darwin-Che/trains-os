@@ -14,6 +14,8 @@ extern char rpi_bluetooth_commander_elf_start[];
 extern char rpi_bluetooth_hci_rx_elf_start[];
 extern char rpi_bluetooth_gatt_elf_start[];
 extern char clock_server_elf_start[];
+extern char clock_server_helper_elf_start[];
+extern char clock_notifier_elf_start[];
 
 static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "user_entry")) {
@@ -51,6 +53,12 @@ static const char * resolve_elf_start(const char * program_name) {
   }
   if (util_strcmp(program_name, "clock_server")) {
     return clock_server_elf_start;
+  }
+  if (util_strcmp(program_name, "clock_server_helper")) {
+    return clock_server_helper_elf_start;
+  }
+  if (util_strcmp(program_name, "clock_notifier")) {
+    return clock_notifier_elf_start;
   }
   return NULL;
 }

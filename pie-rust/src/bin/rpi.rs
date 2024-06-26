@@ -11,13 +11,14 @@ use rust_pie::log;
 use rust_pie::sys::syscall::*;
 use rust_pie::api::rpi_uart::*;
 use rust_pie::api::name_server::*;
+use rust_pie::api::clock::*;
 
 use core::cell::SyncUnsafeCell;
 
 /// This function is called on panic.
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
+    log!("{}", info);
     loop {}
 }
 
@@ -37,8 +38,17 @@ pub extern "C" fn _start() {
     ker_create(2, b"PROGRAM\0rpi_bluetooth_gatt\0").unwrap();
     ker_create(2, b"PROGRAM\0rpi_bluetooth_hci_rx\0").unwrap();
 
-    // let mut recv_box: RecvBox = RecvBox::default();
-    // let mut send_box: SendBox = SendBox::default();
+    let mut recv_box: RecvBox = RecvBox::default();
+    let mut send_box: SendBox = SendBox::default();
+
+    // let clock_server = ns_get("clock_server").unwrap();
+    // loop {
+    //     let mut req = SendCtx::<ClockWaitReq>::new(&mut send_box).unwrap();
+    //     req.ticks = 10;
+    //     ker_send(clock_server, &send_box, &mut recv_box);
+
+    //     log!("[TEST] Clock Server Wakeup");
+    // }
 
     // let mut arr = [[0; 19]; 100];
     // let rx_tid = ker_create(2, b"PROGRAM\0rpi_uart\0ID\04\0").unwrap();

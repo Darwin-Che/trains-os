@@ -1,7 +1,6 @@
 pub use msgbox_macro::*;
 pub use crate::sys::msgbox::*;
 pub use crate::sys::types::*;
-pub use crate::println;
 
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]

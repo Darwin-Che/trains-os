@@ -114,5 +114,17 @@ SECTIONS {
     pie-rust/build/clock_server_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(clock_server_helper_elf_start = .);
+  .clock_server_helper_elf : {
+    pie-rust/build/clock_server_helper_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(clock_notifier_elf_start = .);
+  .clock_notifier_elf : {
+    pie-rust/build/clock_notifier_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }
