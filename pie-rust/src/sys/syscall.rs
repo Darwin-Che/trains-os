@@ -55,3 +55,15 @@ pub fn ker_await_uart(uart_id: u32) -> Result<u32, i32> {
         }
     }
 }
+
+pub fn ker_await_clock() -> Result<(), i32> {
+    unsafe {
+        let ret : i32 = ke_await_event((97 << 16));
+
+        if ret < 0 {
+            Err(ret)
+        } else {
+            Ok(())
+        }
+    }
+}

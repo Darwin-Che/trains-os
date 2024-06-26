@@ -1,13 +1,9 @@
 use core::fmt;
 use core::fmt::Write;
-use core::ffi::{c_char, c_int};
-use crate::sys::syscall::*;
 use crate::sys::types::*;
 use crate::api::name_server::*;
 use crate::api::rpi_uart::*;
-use crate::println;
 
-use lazy_static::lazy_static;
 use core::cell::SyncUnsafeCell;
 use heapless::String;
 
@@ -28,10 +24,6 @@ pub struct Logger {
     recv_box: RecvBox,
     buffer: String<2000>,
 }
-
-// lazy_static! {
-//     static ref GLOBAL_LOGGER: SyncUnsafeCell<Logger> = SyncUnsafeCell::new(Logger::new());
-// }
 
 static GLOBAL_LOGGER: SyncUnsafeCell<Option<Logger>> = SyncUnsafeCell::new(None);
 

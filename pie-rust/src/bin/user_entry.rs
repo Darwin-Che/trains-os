@@ -23,6 +23,9 @@ pub extern "C" fn _start() {
     let child_tid = ker_create(1, child_args).unwrap();
     println!("child_tid = {child_tid}");
 
+    let child_args = "PROGRAM\0clock_server\0".as_bytes();
+    let child_tid = ker_create(0, child_args).unwrap();
+
     let child_args = "PROGRAM\0rpi\0".as_bytes();
     let child_tid = ker_create(3, child_args).unwrap();
     println!("child_tid = {child_tid}"); 

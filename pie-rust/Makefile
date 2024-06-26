@@ -1,4 +1,19 @@
-PROGRAMS=user_entry msg_demo msg_demo_child name_server name_server_demo rpi rpi_uart rpi_uart_intr_broker rpi_bluetooth_commander rpi_bluetooth_hci_rx rpi_bluetooth_gatt
+PROGRAMS=
+PROGRAMS+=user_entry
+PROGRAMS+=msg_demo
+PROGRAMS+=msg_demo_child
+PROGRAMS+=name_server
+PROGRAMS+=name_server_demo
+PROGRAMS+=rpi
+PROGRAMS+=rpi_uart
+PROGRAMS+=rpi_uart_intr_broker
+PROGRAMS+=rpi_bluetooth_commander
+PROGRAMS+=rpi_bluetooth_hci_rx
+PROGRAMS+=rpi_bluetooth_gatt
+PROGRAMS+=clock_server
+PROGRAMS+=clock_server_helper
+PROGRAMS+=clock_notifier
+
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 
 all: $(PROGRAMS_ELF)
