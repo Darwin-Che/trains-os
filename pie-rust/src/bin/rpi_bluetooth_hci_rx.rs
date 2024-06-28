@@ -157,8 +157,19 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
                                     event.supervision_timeout = (param_bytes[17] as u16) << 8 | (param_bytes[16] as u16);
                                     event.central_clock_accuracy = param_bytes[18];
 
+                                    ker_send(gatt, &send_box, &mut recv_box).unwrap();
                                     ker_send(commander, &send_box, &mut recv_box).unwrap();
                                 },
+                                // LE Data Length Change event
+                                0x07 => {
+                                    let connection_handle = (param_bytes[2] as u16) << 8 | (param_bytes[1] as u16);
+                                    let max_tx_len = (param_bytes[4] as u16) << 8 | (param_bytes[3] as u16);
+                                    let max_tx_time = (param_bytes[6] as u16) << 8 | (param_bytes[5] as u16);
+                                    let max_rx_len = (param_bytes[8] as u16) << 8 | (param_bytes[7] as u16);
+                                    let max_rx_time = (param_bytes[10] as u16) << 8 | (param_bytes[9] as u16);
+                                    log!("[HCI Event] LE Data Length Change event handle={} tx={}/{} rx={}/{}",
+                                            connection_handle, max_tx_len, max_tx_time, max_rx_len, max_rx_time);
+                                }
                                 _ => {
                                     log!("Bluetooth LE Unrecognized Subevent Code {} {:?}", subevent_code, param_bytes);
                                 }
@@ -183,6 +194,7 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
                             let mut event = SendCtx::<HciDisconnectionComplete>::new(&mut send_box).unwrap();
                             event.reason = param_bytes[3];
 
+                            ker_send(gatt, &send_box, &mut recv_box).unwrap();
                             ker_send(commander, &send_box, &mut recv_box).unwrap();
                         },
                         // Command Status Event
@@ -196,6 +208,9 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
 
                             ker_send(commander, &send_box, &mut recv_box).unwrap();
                         },
+                        0xff => {
+                            log!("Bluetooth Vendor Specific Event Code {} {:?}", event_code, param_bytes);
+                        }
                         _ => {
                             log!("Bluetooth Unrecognized Event Code {} {:?}", event_code, param_bytes);
                         }

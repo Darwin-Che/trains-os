@@ -36,8 +36,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
     let mut recv_box: RecvBox = RecvBox::default();
 
     loop {
-        let mut wait_req = SendCtx::<ClockWaitReq>::new(&mut send_box).unwrap();
-        wait_req.ticks = 0;
+        let mut wait_req = SendCtx::<ClockWaitResp>::new(&mut send_box).unwrap();
 
         ker_send(parent, &send_box, &mut recv_box).unwrap();
 

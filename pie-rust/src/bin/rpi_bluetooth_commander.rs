@@ -278,6 +278,9 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
 
         match RecvEnum::from_recv_bytes(&mut recv_box) {
             Some(RecvEnum::HciDisconnectionComplete(discc)) => {
+                SendCtx::<HciReply>::new(&mut send_box).unwrap();
+                ker_reply(sender_tid, &send_box).unwrap(); 
+
                 commander.start_active_advertising();
                 log!("rpi_bluetooth Start active_advertising Finished");
             

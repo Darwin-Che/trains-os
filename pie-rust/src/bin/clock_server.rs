@@ -30,6 +30,7 @@ const QUANTUM: u64 = 10 * 1000; // us
 enum RecvEnum<'a> {
     ClockNotifier(&'a mut ClockNotifier),
     ClockWaitReq(&'a mut ClockWaitReq),
+    ClockCurTickReq(&'a mut ClockCurTickReq),
 }
 
 #[derive(Eq, Ord, PartialEq, PartialOrd)]
@@ -101,6 +102,12 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                     }
                     heap.push(WaitReq { until: curtick + cw.ticks, tid: sender });
                 }
+            },
+            // CurTick Request
+            Some(RecvEnum::ClockCurTickReq(_)) => {
+                let mut resp = SendCtx::<ClockCurTickResp>::new(&mut send_box).unwrap();
+                resp.cur_tick = curtick;
+                ker_reply(sender, &send_box);
             },
             _ => {
                 log!("[Clock] Unexpected Message");
