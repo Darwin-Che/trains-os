@@ -110,8 +110,6 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
                 let data_len = (header[3] as u16) << 8 | (header[2] as u16);
 
                 state.read_bytes(data_len as usize, |data_bytes| {
-                    log!("[ACL Recv] {:?} {:?}", header, data_bytes);
-
                     // Check for L2CAP Packet
                     let pdu_len = (data_bytes[1] as u16) << 8 | (data_bytes[0] as u16);
                     if pdu_len + 4 == data_len {
@@ -126,6 +124,7 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
 
                         ker_send(gatt, &send_box, &mut recv_box).unwrap();
                     } else {
+                        log!("[ACL Recv] Cannot Handle {:?} {:?}", header, data_bytes);
                         // let mut packet = SendCtx::<AclPacket>::new(&mut send_box).unwrap();
                         // packet.data = packet.attach_array(data_len as usize).unwrap();
                         // packet.data.copy_from_slice(data_bytes);
@@ -171,13 +170,13 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
                                             connection_handle, max_tx_len, max_tx_time, max_rx_len, max_rx_time);
                                 }
                                 _ => {
-                                    log!("Bluetooth LE Unrecognized Subevent Code {} {:?}", subevent_code, param_bytes);
+                                    log!("[HCI Event] LE Unrecognized Subevent Code {} {:?}", subevent_code, param_bytes);
                                 }
                             }
                         },
                         // Command Complete Event
                         0x0e => {
-                            log!("[HCI Event] Command Complete");
+                            // log!("[HCI Event] Command Complete");
 
                             let mut event = SendCtx::<HciCommandComplete>::new(&mut send_box).unwrap();
                             event.num_hci_command_packets = param_bytes[0];
@@ -208,17 +207,21 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
 
                             ker_send(commander, &send_box, &mut recv_box).unwrap();
                         },
+                        // HCI_Number_Of_Completed_Packets
+                        0x13 => {
+                            // Do nothing
+                        },
                         0xff => {
-                            log!("Bluetooth Vendor Specific Event Code {} {:?}", event_code, param_bytes);
-                        }
+                            log!("[HCI Event] Vendor Specific Event Code {} {:?}", event_code, param_bytes);
+                        },
                         _ => {
-                            log!("Bluetooth Unrecognized Event Code {} {:?}", event_code, param_bytes);
+                            log!("[HCI Event] Unrecognized Event Code {} {:?}", event_code, param_bytes);
                         }
                     }
                 });
             },
             _ => {
-                panic!("Bluetooth Unrecognized packet id {}", hci_packet_id);
+                panic!("[HCI Event] Unrecognized packet id {}", hci_packet_id);
             }
         }
     }

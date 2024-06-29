@@ -3,17 +3,9 @@
 #![feature(sync_unsafe_cell)]
 
 use core::panic::PanicInfo;
-
-use rust_pie::println;
-use rust_pie::sys::log::Logger;
 use rust_pie::log;
-
 use rust_pie::sys::syscall::*;
 use rust_pie::api::rpi_uart::*;
-use rust_pie::api::name_server::*;
-use rust_pie::api::clock::*;
-
-use core::cell::SyncUnsafeCell;
 
 /// This function is called on panic.
 #[panic_handler]
@@ -38,8 +30,8 @@ pub extern "C" fn _start() {
     ker_create(2, b"PROGRAM\0rpi_bluetooth_gatt\0").unwrap();
     ker_create(2, b"PROGRAM\0rpi_bluetooth_hci_rx\0").unwrap();
 
-    let mut recv_box: RecvBox = RecvBox::default();
-    let mut send_box: SendBox = SendBox::default();
+    // let mut recv_box: RecvBox = RecvBox::default();
+    // let mut send_box: SendBox = SendBox::default();
 
     // let clock_server = ns_get("clock_server").unwrap();
     // loop {

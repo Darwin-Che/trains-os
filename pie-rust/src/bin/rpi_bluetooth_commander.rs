@@ -68,11 +68,11 @@ impl Commander {
         let interval_max = (100 * 1000 / 625) as u16; // every 100ms
  
         self.set_le_advert_params(LL_ADV_CONN_IND, interval_min, interval_max, 0, 0);
-        log!("rpi_bluetooth::set_le_advert_params() Set advert_params Finished");
+        log!("[BT_CMD]::set_le_advert_params() Set advert_params Finished");
         self.set_le_advert_data();
-        log!("rpi_bluetooth::set_le_advert_data() Set advert_data Finished");
+        log!("[BT_CMD]::set_le_advert_data() Set advert_data Finished");
         self.set_le_advert_enable(1);
-        log!("rpi_bluetooth::set_le_advert_enable() Enable advert Finished");
+        log!("[BT_CMD]::set_le_advert_enable() Enable advert Finished");
     }
 
     fn stop_active_advertising(&mut self) {
@@ -167,7 +167,7 @@ impl Commander {
         uart_req.bytes[4..].copy_from_slice(data);
 
         if DEBUG {
-            log!("rpi_bluetooth::hci_command_bytes() Send len={}", uart_req.bytes.len());
+            log!("[BT_CMD]::hci_command_bytes() Send len={}", uart_req.bytes.len());
         }
 
         ker_send(self.uart_0, &self.send_box, &mut self.recv_box).unwrap();
@@ -181,11 +181,11 @@ impl Commander {
         match RecvEnum::from_recv_bytes(&mut self.recv_box) {
             Some(RecvEnum::HciCommandComplete(cc)) => {
                 data.copy_from_slice(&cc.return_param[0..data.len()]);
-                assert!(cc.command_opcode == opcode, "rpi_bluetooth::wait_command_complete failed [opcode {} != {}]", cc.command_opcode, opcode);
-                assert!(cc.num_hci_command_packets != 0, "rpi_bluetooth::wait_command_complete num_hci_command_packets = 0");
+                assert!(cc.command_opcode == opcode, "[BT_CMD]::wait_command_complete failed [opcode {} != {}]", cc.command_opcode, opcode);
+                assert!(cc.num_hci_command_packets != 0, "[BT_CMD]::wait_command_complete num_hci_command_packets = 0");
             }
             _ => {
-                panic!("rpi_bluetooth::wait_command_complete failed [recv]");
+                panic!("[BT_CMD]::wait_command_complete failed [recv]");
             }
         }
     }
@@ -200,7 +200,7 @@ impl Commander {
                 return *cc;
             }
             _ => {
-                panic!("rpi_bluetooth::wait_command_complete failed [recv]");
+                panic!("[BT_CMD]::wait_command_complete failed [recv]");
             }
         } 
     }
@@ -220,14 +220,15 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
     // RESET
     commander.cmd(OGF_HOST_CONTROL << 10 | COMMAND_RESET_CHIP, &[]);
     commander.wait_command_complete(OGF_HOST_CONTROL << 10 | COMMAND_RESET_CHIP, &mut []);
-    log!("rpi_bluetooth Reset finished");
+    log!("[BT_CMD] Reset finished");
 
     // LOAD FIRMWARE
+    log!("[BT_CMD] Loading Firmware Please Wait ...");
     commander.cmd(OGF_VENDOR << 10 | COMMAND_LOAD_FIRMWARE, &[]);
     commander.wait_command_complete(OGF_VENDOR << 10 | COMMAND_LOAD_FIRMWARE, &mut []);
     let mut idx = 0;
     while idx < FIRMWARE.len() {
-        // log!("rpi_bluetooth::bt_load_firmware() idx={}", idx);
+        // log!("[BT_CMD]::bt_load_firmware() idx={}", idx);
         let opcode_lo = FIRMWARE[idx] as u16;
         let opcode_hi = FIRMWARE[idx+1] as u16;
         let opcode: u16 = (opcode_hi << 8) | opcode_lo;
@@ -236,7 +237,7 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
         commander.wait_command_complete(opcode, &mut []);
         idx += 3 + data_len;
     } 
-    log!("rpi_bluetooth Load Firmware finished");
+    log!("[BT_CMD] Load Firmware finished");
 
     for i in 0..10000000 {
         unsafe {
@@ -246,49 +247,53 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
 
     // SET BAUDRATE
     commander.set_baud();
-    log!("rpi_bluetooth Set Baudrate finished");
+    log!("[BT_CMD] Set Baudrate finished");
 
     // SET ADDR
     commander.set_addr();
-    log!("rpi_bluetooth Set Addr finished");
+    log!("[BT_CMD] Set Addr finished");
 
     // GET ADDR
     let addr = commander.get_addr();
-    log!("rpi_bluetooth Get Addr {:?}", addr);
+    log!("[BT_CMD] Get Addr {:?}", addr);
 
     commander.set_le_eventmask(0xff);
-    log!("rpi_bluetooth Set eventmask Finished");
+    log!("[BT_CMD] Set eventmask Finished");
 
     commander.set_user_friendly_name("balance_car");
 
     commander.start_active_advertising();
-    log!("rpi_bluetooth Start active_advertising Finished");
+    log!("[BT_CMD] Start active_advertising Finished");
 
     let conn = commander.wait_connection_complete();
-    log!("rpi_bluetooth Connection Complete {:?}", conn);
+    log!("[BT_CMD] Connection Complete {:?}", conn);
 
     commander.stop_active_advertising();
-    log!("rpi_bluetooth Stop active_advertising Finished");
+    log!("[BT_CMD] Stop active_advertising Finished");
 
     let mut recv_box: RecvBox = RecvBox::default();
     let mut send_box: SendBox = SendBox::default();
+
+    log!("[BT_CMD] Enter Loop");
 
     loop {
         let sender_tid = ker_recv(&mut recv_box);
 
         match RecvEnum::from_recv_bytes(&mut recv_box) {
             Some(RecvEnum::HciDisconnectionComplete(discc)) => {
+                log!("[BT_CMD] Disconnection Detected");
+
                 SendCtx::<HciReply>::new(&mut send_box).unwrap();
                 ker_reply(sender_tid, &send_box).unwrap(); 
 
                 commander.start_active_advertising();
-                log!("rpi_bluetooth Start active_advertising Finished");
+                log!("[BT_CMD] Start active_advertising Finished");
             
                 let conn = commander.wait_connection_complete();
-                log!("rpi_bluetooth Connection Complete {:?}", conn);
+                log!("[BT_CMD] Connection Complete {:?}", conn);
             
                 commander.stop_active_advertising();
-                log!("rpi_bluetooth Stop active_advertising Finished");
+                log!("[BT_CMD] Stop active_advertising Finished");
             },
             _ => {
                 SendCtx::<HciReply>::new(&mut send_box).unwrap();
