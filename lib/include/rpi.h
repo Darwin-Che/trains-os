@@ -11,11 +11,9 @@ struct GPIO
 {
   uint32_t GPFSEL[6];
   uint32_t : 32;
-  uint32_t GPSET0;
-  uint32_t GPSET1;
+  uint32_t GPSET[2];
   uint32_t : 32;
-  uint32_t GPCLR0;
-  uint32_t GPCLR1;
+  uint32_t GPCLR[2];
   uint32_t : 32;
   uint32_t GPLEV0;
   uint32_t GPLEV1;

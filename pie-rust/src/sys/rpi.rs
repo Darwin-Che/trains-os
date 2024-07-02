@@ -21,7 +21,11 @@ extern "C" {
     // void uart_init(uint32_t id, uint32_t baudrate);
     fn uart_init(id: u32, baudrate: u32);
     // void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor)
-    fn setup_gpio(pin: u32, setting: u32, resistor: u32);
+    pub fn setup_gpio(pin: u32, setting: u32, resistor: u32);
+    // void set_outpin_gpio(uint32_t pin)
+    pub fn set_outpin_gpio(pin: u32);
+    // void clear_outpin_gpio(uint32_t pin)
+    pub fn clear_outpin_gpio(pin: u32);
 }
 
 const UART_CLK: u64 = 48000000;
