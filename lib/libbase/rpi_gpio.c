@@ -48,6 +48,18 @@ void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor)
   gpio->PUP_PDN_CNTRL_REG[reg] = status; // write back
 }
 
+void set_outpin_gpio(uint32_t pin) {
+  uint32_t reg = pin / 32;
+  uint32_t shift = pin % 32;
+  gpio->GPSET[reg] = (1 << shift);
+}
+
+void clear_outpin_gpio(uint32_t pin) {
+  uint32_t reg = pin / 32;
+  uint32_t shift = pin % 32;
+  gpio->GPCLR[reg] = (1 << shift);
+}
+
 void init_gpio()
 {
   setup_gpio(18, GPIO_ALTFN4, GPIO_NONE);
