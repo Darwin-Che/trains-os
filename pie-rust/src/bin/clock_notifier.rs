@@ -32,7 +32,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
     SendCtx::<ClockNotifier>::new(&mut send_box).unwrap();
 
     loop {
-        ker_send(clock_server, &send_box, &mut recv_box);
+        ker_send(clock_server, &send_box, &mut recv_box).unwrap();
         
         // Wait for the interrupt
         ker_await_clock().unwrap();

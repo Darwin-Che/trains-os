@@ -8,6 +8,7 @@ extern "C" {
     fn ke_my_tid() -> c_int;
     fn ke_await_event(intr_id: u32) -> c_int;
     fn ke_exit();
+    fn ke_sys_health(ptr: *mut KerSysHealth);
 }
 
 pub fn ker_exit() {
@@ -58,7 +59,7 @@ pub fn ker_await_uart(uart_id: u32) -> Result<u32, i32> {
 
 pub fn ker_await_clock() -> Result<(), i32> {
     unsafe {
-        let ret : i32 = ke_await_event((97 << 16));
+        let ret : i32 = ke_await_event(97 << 16);
 
         if ret < 0 {
             Err(ret)
@@ -66,4 +67,17 @@ pub fn ker_await_clock() -> Result<(), i32> {
             Ok(())
         }
     }
+}
+
+#[repr(C)]
+pub struct KerSysHealth {
+    pub idle_percent: i32,
+}
+
+pub fn ker_sys_health() -> KerSysHealth {
+    let mut ret = KerSysHealth {idle_percent: 0};
+    unsafe {
+        ke_sys_health((&mut ret) as *mut KerSysHealth);
+    }
+    ret
 }

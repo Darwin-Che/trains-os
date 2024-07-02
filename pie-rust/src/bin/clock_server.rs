@@ -3,8 +3,6 @@
 
 use core::panic::PanicInfo;
 use rust_pie::api::name_server::*;
-use rust_pie::api::rpi_uart::*;
-use rust_pie::api::rpi_bluetooth::*;
 use rust_pie::api::clock::*;
 use rust_pie::log;
 use rust_pie::println;
@@ -30,9 +28,10 @@ const QUANTUM: u64 = 10 * 1000; // us
 enum RecvEnum<'a> {
     ClockNotifier(&'a mut ClockNotifier),
     ClockWaitReq(&'a mut ClockWaitReq),
+    ClockCurTickReq(&'a mut ClockCurTickReq),
 }
 
-#[derive(Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 struct WaitReq {
     pub until: u64,
     pub tid: Tid,
@@ -43,7 +42,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
     ns_set("clock_server").unwrap();
     let mut notifier = ker_create(0, b"PROGRAM\0clock_notifier\0").unwrap();
 
-    let mut clock = RpiClock::new();
+    let clock = RpiClock::new();
     let mut t = clock.cur_u64();
     clock.intr_clear();
 
@@ -67,7 +66,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                 }
 
                 SendCtx::<ClockNotifier>::new(&mut send_box).unwrap();
-                ker_reply(sender, &send_box);
+                ker_reply(sender, &send_box).unwrap();
 
                 // Set the interrupt
                 t += QUANTUM;
@@ -80,7 +79,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                     let wait_req = heap.pop().unwrap();
                     
                     SendCtx::<ClockWaitResp>::new(&mut send_box).unwrap();
-                    ker_reply(wait_req.tid, &send_box);
+                    ker_reply(wait_req.tid, &send_box).unwrap();
                 }
 
                 if DEBUG {
@@ -94,13 +93,19 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                         println!("[Clock] Wait Req NoWait {}", sender);
                     }
                     SendCtx::<ClockWaitResp>::new(&mut send_box).unwrap();
-                    ker_reply(sender, &send_box); 
+                    ker_reply(sender, &send_box).unwrap(); 
                 } else {
                     if DEBUG {
                         println!("[Clock] Wait Req {}", sender);
                     }
-                    heap.push(WaitReq { until: curtick + cw.ticks, tid: sender });
+                    heap.push(WaitReq { until: curtick + cw.ticks, tid: sender }).unwrap();
                 }
+            },
+            // CurTick Request
+            Some(RecvEnum::ClockCurTickReq(_)) => {
+                let mut resp = SendCtx::<ClockCurTickResp>::new(&mut send_box).unwrap();
+                resp.cur_tick = curtick;
+                ker_reply(sender, &send_box).unwrap();
             },
             _ => {
                 log!("[Clock] Unexpected Message");

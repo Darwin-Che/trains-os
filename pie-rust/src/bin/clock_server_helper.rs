@@ -3,16 +3,10 @@
 
 use core::panic::PanicInfo;
 use rust_pie::api::name_server::*;
-use rust_pie::api::rpi_uart::*;
-use rust_pie::api::rpi_bluetooth::*;
 use rust_pie::api::clock::*;
 use rust_pie::log;
-use rust_pie::println;
 use rust_pie::sys::entry_args::*;
 use rust_pie::sys::syscall::*;
-use rust_pie::sys::rpi::*;
-
-const DEBUG: bool = false;
 
 /// This function is called on panic.
 #[panic_handler]
@@ -36,8 +30,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
     let mut recv_box: RecvBox = RecvBox::default();
 
     loop {
-        let mut wait_req = SendCtx::<ClockWaitReq>::new(&mut send_box).unwrap();
-        wait_req.ticks = 0;
+        SendCtx::<ClockWaitResp>::new(&mut send_box).unwrap();
 
         ker_send(parent, &send_box, &mut recv_box).unwrap();
 
