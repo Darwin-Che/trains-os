@@ -37,11 +37,13 @@ pub struct ClockCurTickResp {
 #[allow(dead_code)]
 enum RecvEnum<'a> {
     ClockCurTickResp(&'a mut ClockCurTickResp),
+    ClockWaitResp(&'a mut ClockWaitResp),
 }
 
 pub struct ClockAPI {
     clock_server: Tid,
     get_cur_tick_send_box: SendBox,
+    wait_ticks_send_box: SendBox,
     recv_box: RecvBox,
 }
 
@@ -51,6 +53,7 @@ impl ClockAPI {
         let mut s = Self {
             clock_server: tid.unwrap(),
             get_cur_tick_send_box: SendBox::new(),
+            wait_ticks_send_box: SendBox::new(),
             recv_box: RecvBox::new(),
         };
 
@@ -70,6 +73,20 @@ impl ClockAPI {
             }
         };
     }
+
+    pub fn wait_ticks(&mut self, ticks: u64) {
+        let mut wait_req = SendCtx::<ClockWaitReq>::new(&mut self.wait_ticks_send_box).unwrap();
+        wait_req.ticks = ticks;
+        ker_send(self.clock_server, &self.wait_ticks_send_box, &mut self.recv_box).unwrap();
+        match RecvEnum::from_recv_bytes(&mut self.recv_box) {
+            Some(RecvEnum::ClockWaitResp(_)) => {
+                return;
+            },
+            _ => {
+                panic!("wait_ticks Unexpected Response");
+            }
+        };
+    }
 }
 
 static GLOBAL_CLOCK_API: SyncUnsafeCell<Option<ClockAPI>> = SyncUnsafeCell::new(None);
@@ -80,4 +97,12 @@ pub fn get_cur_tick() -> u64 {
         *clock_api = Some(ClockAPI::new());
     }
     clock_api.as_mut().unwrap().get_cur_tick()
+}
+
+pub fn wait_ticks(ticks: u64) {
+    let clock_api : &mut Option<ClockAPI> = unsafe { &mut *GLOBAL_CLOCK_API.get() };
+    if clock_api.is_none() {
+        *clock_api = Some(ClockAPI::new());
+    }
+    clock_api.as_mut().unwrap().wait_ticks(ticks)
 }

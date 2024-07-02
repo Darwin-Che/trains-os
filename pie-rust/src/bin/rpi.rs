@@ -33,7 +33,6 @@ pub extern "C" fn _start() {
     ker_create(2, b"PROGRAM\0rpi_bluetooth_gatt\0").unwrap();
     ker_create(2, b"PROGRAM\0rpi_bluetooth_hci_rx\0").unwrap();
 
-
     let tid_timeout = ker_create(2, b"PROGRAM\0clock_server_helper\0").unwrap();
 
     let mut recv_box: RecvBox = RecvBox::default();

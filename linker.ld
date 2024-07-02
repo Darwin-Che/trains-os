@@ -18,12 +18,18 @@ SECTIONS {
     build/loader.o (.text*)
 	}
 
-  /* 2^20 = 1MB */
-  . = 0x100000;
+  /* 2 * 2^20 = 2MB */
+  . = 0x00200000;
+
+  .rodata : {
+  }
 
   .data : {
     build/kernel.o (.data*)
     build/loader.o (.data*)
+  }
+
+  .eh_frame : {
   }
 
   . = ALIGN(16);
@@ -31,8 +37,9 @@ SECTIONS {
 
   }
 
-  /* 2 * 2^20 = 2MB */
-  . = 0x00200000;
+
+  /* 4 * 2^20 = 4MB */
+  . = 0x00400000;
   PROVIDE(KERNEL_STACK_START = .);
   /* 8 * 2^20 = 8MB */
   . = 0x00800000;
