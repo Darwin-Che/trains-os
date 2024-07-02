@@ -6,7 +6,6 @@ use core::panic::PanicInfo;
 use rust_pie::log;
 use rust_pie::sys::syscall::*;
 use rust_pie::api::rpi_uart::*;
-
 use rust_pie::api::clock::*;
 use rust_pie::sys::rpi::*;
 
@@ -33,6 +32,7 @@ pub extern "C" fn _start() {
     ker_create(2, b"PROGRAM\0rpi_bluetooth_commander\0").unwrap();
     ker_create(2, b"PROGRAM\0rpi_bluetooth_gatt\0").unwrap();
     ker_create(2, b"PROGRAM\0rpi_bluetooth_hci_rx\0").unwrap();
+
 
     let tid_timeout = ker_create(2, b"PROGRAM\0clock_server_helper\0").unwrap();
 
