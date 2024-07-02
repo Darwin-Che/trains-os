@@ -37,6 +37,7 @@ SECTIONS {
 
   }
 
+
   /* 4 * 2^20 = 4MB */
   . = 0x00400000;
   PROVIDE(KERNEL_STACK_START = .);

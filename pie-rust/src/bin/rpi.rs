@@ -6,7 +6,6 @@ use core::panic::PanicInfo;
 use rust_pie::log;
 use rust_pie::sys::syscall::*;
 use rust_pie::api::rpi_uart::*;
-
 use rust_pie::api::clock::*;
 use rust_pie::sys::rpi::*;
 
