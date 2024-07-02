@@ -9,6 +9,7 @@ use rust_pie::api::rpi_bluetooth::*;
 use rust_pie::log;
 use rust_pie::sys::entry_args::*;
 use rust_pie::sys::syscall::*;
+use rust_pie::api::clock::*;
 
 const DEBUG: bool = false;
 
@@ -239,11 +240,8 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
     } 
     log!("[BT_CMD] Load Firmware finished");
 
-    for i in 0..10000000 {
-        unsafe {
-            asm!("nop");
-        }
-    }
+    // Let's Wait 2 second
+    wait_ticks(200);
 
     // SET BAUDRATE
     commander.set_baud();

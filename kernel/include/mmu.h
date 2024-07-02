@@ -2,7 +2,7 @@
 #define K_MM_H
 
 // The bottom
-#define DATA_BASE 0x1000000 // 16MB
+#define DATA_BASE 0x00200000 // 2 * (2^20) = 2MB = exactly one PMD
 #define DEVICE_BASE 0xFC000000
 
 #define PAGE_SHIFT 12
