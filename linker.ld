@@ -133,5 +133,11 @@ SECTIONS {
     pie-rust/build/clock_notifier_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(encoder_server_elf_start = .);
+  .encoder_server_elf : {
+    pie-rust/build/encoder_server_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }

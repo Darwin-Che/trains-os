@@ -60,6 +60,31 @@ void clear_outpin_gpio(uint32_t pin) {
   gpio->GPCLR[reg] = (1 << shift);
 }
 
+void gpio_set_edge_trigger(uint32_t pin, bool rising, bool falling) {
+  uint32_t reg = pin / 32;
+  uint32_t shift = pin % 32;
+  if (rising) {
+    gpio->GPREN[reg] |= (1 << shift);
+  }
+  if (falling) {
+    gpio->GPFEN[reg] |= (1 << shift);
+  }
+}
+
+uint64_t gpio_get_triggered() {
+  return (((uint64_t) gpio->GPEDS[1]) << 32) | ((uint64_t) gpio->GPEDS[0]);
+}
+
+void gpio_clear_triggered(uint32_t start_pin, uint32_t end_pin) {
+  uint64_t reg = (((uint64_t) 1) << end_pin) - (((uint64_t) 1) << start_pin);
+  gpio->GPEDS[0] |= (uint32_t) (reg && 0xffffffff);
+  gpio->GPEDS[1] |= (uint32_t) (reg >> 32);
+}
+
+uint64_t gpio_read() {
+  return (((uint64_t) gpio->GPLEV[1]) << 32) | ((uint64_t) gpio->GPLEV[0]);
+}
+
 void init_gpio()
 {
   setup_gpio(18, GPIO_ALTFN4, GPIO_NONE);

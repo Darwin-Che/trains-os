@@ -24,6 +24,7 @@
 
 #define INTR_ID_TIMER (GIC_INTR_ID_TIMER << 16)
 #define INTR_ID_UART(id) ((GIC_INTR_ID_UART << 16) + (id))
+#define INTR_ID_GPIO_0(id) ((GIC_INTR_ID_GPIO_0 << 16) + (id))
 
 enum kUartIER {
   UART_IER_RHR = (0x1 << 0),

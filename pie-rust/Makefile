@@ -13,6 +13,7 @@ PROGRAMS+=rpi_bluetooth_gatt
 PROGRAMS+=clock_server
 PROGRAMS+=clock_server_helper
 PROGRAMS+=clock_notifier
+PROGRAMS+=encoder_server
 
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 

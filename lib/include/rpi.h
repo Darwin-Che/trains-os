@@ -15,17 +15,13 @@ struct GPIO
   uint32_t : 32;
   uint32_t GPCLR[2];
   uint32_t : 32;
-  uint32_t GPLEV0;
-  uint32_t GPLEV1;
+  uint32_t GPLEV[2];
   uint32_t : 32;
-  uint32_t GPEDS0;
-  uint32_t GPEDS1;
+  uint32_t GPEDS[2];
   uint32_t : 32;
-  uint32_t GPREN0;
-  uint32_t GPREN1;
+  uint32_t GPREN[2];
   uint32_t : 32;
-  uint32_t GPFEN0;
-  uint32_t GPFEN1;
+  uint32_t GPFEN[2];
   uint32_t : 32;
   uint32_t GPHEN0;
   uint32_t GPHEN1;
@@ -60,6 +56,10 @@ static const uint32_t GPIO_PUP = 0x01;
 static const uint32_t GPIO_PDP = 0x02;
 
 void setup_gpio(uint32_t pin, uint32_t setting, uint32_t resistor);
+void gpio_set_edge_trigger(uint32_t pin, bool rising, bool falling);
+uint64_t gpio_get_triggered();
+void gpio_clear_triggered(uint32_t start_pin, uint32_t end_pin); // end_pin not included
+uint64_t gpio_read();
 
 /* UART */
 

@@ -39,11 +39,14 @@ void k_gic_enable()
 {
   // GIC_INTR_ID_TIMER = 3 * 32 + 1
   pi_gicd->GICD_ISENABLERn[(GIC_INTR_ID_TIMER / 32)] |= (0x1 << (GIC_INTR_ID_TIMER % 32));
-  // GIC_INTR_UART (bank 0) = 4 * 32 + 25 = 153
+  // GIC_INTR_UART = 4 * 32 + 25 = 153
   pi_gicd->GICD_ISENABLERn[(GIC_INTR_ID_UART / 32)] |= (0x1 << (GIC_INTR_ID_UART % 32));
+  // GIC_INTR_GPIO_0 (bank 0) = 4 * 32 + 17 = 145
+  pi_gicd->GICD_ISENABLERn[(GIC_INTR_ID_GPIO_0 / 32)] |= (0x1 << (GIC_INTR_ID_GPIO_0 % 32));
   // target interrupt to core 0
   pi_gicd->GICD_ITARGETSRn[GIC_INTR_ID_TIMER] |= (0x1 << 0);
   pi_gicd->GICD_ITARGETSRn[GIC_INTR_ID_UART] |= (0x1 << 0);
+  pi_gicd->GICD_ITARGETSRn[GIC_INTR_ID_GPIO_0] |= (0x1 << 0);
 
   pi_gicd->GICD_CTLR = 0x1; // only enables group 0 interrupts but not group 1 interrupts
   pi_gicc->GICC_CTLR = 0x1; // forwards group 1 interrupts - i think does nothing
@@ -97,113 +100,6 @@ static inline void process_intr_timer()
   k_intr_wakeup_tasks(INTR_ID_TIMER, 0);
 }
 
-// static inline bool process_iir_val(enum UartChnlId channel, int iir_val)
-// {
-//   DEBUG_PRINT("Channel: %d\r\n", channel);
-
-//   if ((iir_val & 0x1) != 0)
-//   {
-//     DEBUG_PRINT("No interrupt pending, val: %d\r\n", iir_val);
-//     return false;
-//   }
-
-//   int iir_code = ((iir_val >> 1) & 0x1F); // get bits 5:1
-
-//   switch (iir_code)
-//   {
-//   case UART_IIR_RECV_TIMEOUT:
-//     DEBUG_PRINT("Receive timeout status interrupt \r\n");
-//     // fall through
-//   case UART_IIR_RHR:
-//     DEBUG_PRINT("RHR interrupt \r\n");
-//     {
-//       k_intr_uart_unarm(channel, UART_IER_RHR);
-
-//       if (channel == TERM_CHANNEL)
-//         k_intr_wakeup_tasks(KE_INTR_TERM_INPUT);
-//       else if (channel == MARKLIN_CHANNEL)
-//         k_intr_wakeup_tasks(KE_INTR_MARKLIN_INPUT);
-//       else
-//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
-
-//       return true;
-//     }
-
-//   case UART_IIR_THR:
-//     DEBUG_PRINT("THR interrupt \r\n");
-//     {
-//       k_intr_uart_unarm(channel, UART_IER_THR);
-
-//       if (channel == TERM_CHANNEL)
-//         k_intr_wakeup_tasks(KE_INTR_TERM_OUTPUT);
-//       else if (channel == MARKLIN_CHANNEL)
-//         k_intr_wakeup_tasks(KE_INTR_MARKLIN_OUTPUT);
-//       else
-//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
-
-//       return true;
-//     }
-
-//   case UART_IIR_CTS_RTS_CHANGE:
-//     DEBUG_PRINT("CTS/RTS state change\r\n");
-//     {
-//       k_intr_uart_unarm(channel, UART_IER_CTS);
-
-//       if (channel == TERM_CHANNEL)
-//       {
-//         ASSERT_MSG(false, "Receive CTS on Term Channel!\r\n");
-//       }
-//       else if (channel == MARKLIN_CHANNEL)
-//         k_intr_wakeup_tasks(KE_INTR_MARKLIN_CTS);
-//       else
-//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
-
-//       return true;
-//     }
-
-//   case UART_IIR_MODEM:
-//     DEBUG_PRINT("Modem interrupt \r\n");
-//     {
-//       if (channel == TERM_CHANNEL)
-//       {
-//         ASSERT_MSG(false, "Receive Modem on Term Channel!\r\n");
-//       }
-//       else if (channel == MARKLIN_CHANNEL)
-//       {
-//         char msr = uart_read_register(0, MARKLIN_CHANNEL, UART_MSR);
-//         DEBUG_PRINT("Modem On Marklin! %X\r\n", msr);
-//         if (msr & 0x1)
-//           k_intr_wakeup_tasks(KE_INTR_MARKLIN_CTS);
-//         k_intr_uart_unarm(channel, UART_IER_MODEM);
-//       }
-//       else
-//         ASSERT_MSG(false, "Invalid Param: channel id %d\r\n", channel);
-//       return true;
-//     }
-
-//     /* **************** BELOW ARE DEFENSIVE BRANCHES **************** */
-
-//   case UART_IIR_RECV_LINE_STATUS:
-//     DEBUG_PRINT("Receive line status interrupt \r\n");
-//     assert_fail();
-//     break;
-//   case UART_IIR_INPUT_PIN_STATE_CHANGE:
-//     DEBUG_PRINT("Input pin state change \r\n");
-//     assert_fail();
-//     break;
-//   case UART_IIR_XOFF_SIGNAL:
-//     DEBUG_PRINT("Xoff Signal \r\n");
-//     assert_fail();
-//     break;
-//   default:
-//     DEBUG_PRINT("Unknown iir value: %d", iir_val);
-//     printf("Unknown iir value: %d", iir_val);
-//     assert_fail();
-//     break;
-//   }
-//   return false;
-// }
-
 static inline void process_intr_uart_id(uint32_t uart_id)
 {
   uint32_t status = uart_intr_status(uart_id);
@@ -225,23 +121,42 @@ static inline void process_intr_uart()
   process_intr_uart_id(5);
 }
 
-// static inline void process_intr_uart(char iir_term, char iir_marklin)
-// {
-//   DEBUG_PRINT("Kernel Process Uart Interrupt\r\n");
-//   bool processed = false;
+static inline void process_intr_gpio_pin(int pin) {
+  // Check for encoder
+  struct kQuadEncoder * encoder = get_encoder_by_pin(&kg_gs->encoder_mgr, pin);
+  if (encoder == NULL) {
+    return;
+  }
 
-//   // Check if interrupt happened in terminal
-//   processed = process_iir_val(TERM_CHANNEL, iir_term) || processed;
+  // Read pins
+  uint64_t pin_lvl = gpio_read();
+  bool a_state = pin_lvl & (1 << encoder->pin_a);
+  bool b_state = pin_lvl & (1 << encoder->pin_b);
 
-//   // Check if interrupt happened in marklin
-//   processed = process_iir_val(MARKLIN_CHANNEL, iir_marklin) || processed;
+  // printf("UDPATE %llu %d %d\r\n", get_current_time_u64(), a_state, b_state);
+  encoder_update(encoder, a_state, b_state);
 
-//   if (!processed)
-//   {
-//     DEBUG_PRINT("SPURIOUS UART Interrupt!!\r\n");
-//     // assert_fail();
-//   }
-// }
+  // gpio_set_edge_trigger(encoder->pin_a, !a_state, a_state);
+  // gpio_set_edge_trigger(encoder->pin_b, !b_state, b_state);
+}
+
+static inline void process_intr_gpio_bank(int bank_id) {
+  static uint32_t gpio_banks[4] = {0, 28, 46, 58};
+
+  uint32_t start = gpio_banks[bank_id];
+  uint32_t end = gpio_banks[bank_id+1];
+
+  uint64_t triggered = gpio_get_triggered();
+
+  for (uint32_t pin = start; pin < end; pin += 1) {
+    // Check if pin is triggered
+    if (triggered & (1 << pin)) {
+      process_intr_gpio_pin(pin);
+    }
+  }
+
+  gpio_clear_triggered(start, end);
+}
 
 void k_intr_handler()
 {
@@ -259,16 +174,10 @@ void k_intr_handler()
     {
       process_intr_uart();
     }
-    // else if (id == GIC_INTR_ID_GPIO_0)
-    // {
-    //   // Must read IIR before debug prints
-    //   char iir_term = uart_read_register(0, TERM_CHANNEL, UART_IIR);
-    //   char iir_marklin = uart_read_register(0, MARKLIN_CHANNEL, UART_IIR);
-
-    //   DEBUG_PRINT("Got interrupt from UART!! \r\n");
-    //   // Process & turn off interrupt
-    //   process_intr_uart(iir_term, iir_marklin);
-    // }
+    else if (id == GIC_INTR_ID_GPIO_0)
+    {
+      process_intr_gpio_bank(0);
+    }
     else if (id == GIC_INTR_ID_NONE)
     {
       DEBUG_PRINT("Finish Kernel Interrupt Handling Loop\r\n");

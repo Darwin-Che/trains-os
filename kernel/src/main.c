@@ -30,10 +30,10 @@ int k_main()
 
   uart_init(2, 115200);
 
-  exception_vector_setup();
-
   struct kGlobalState gs;
   k_gs_init(&gs);
+
+  exception_vector_setup();
 
 #ifdef DEBUG
   k_page_table_print_all();

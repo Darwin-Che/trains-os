@@ -29,9 +29,9 @@ static GLOBAL_LOGGER: SyncUnsafeCell<Option<Logger>> = SyncUnsafeCell::new(None)
 
 impl Logger {
     pub fn new() -> Self {
-        let tid = ns_get("rpi_uart_2");
+        let tid = ns_get_wait("rpi_uart_2");
         Self {
-            logger_tid: tid.unwrap(),
+            logger_tid: tid,
             send_box: SendBox::new(),
             recv_box: RecvBox::new(),
             buffer: String::new(),

@@ -3,11 +3,13 @@
 
 #include "scheduler.h"
 #include "task.h"
+#include "encoder.h"
 
 struct kGlobalState
 {
   struct kTaskDspMgr task_mgr;
   struct kScheduler scheduler;
+  struct kQuadEncoderMgr encoder_mgr;
 
   uint64_t idle_track_start_time;
   uint64_t idle_duration;

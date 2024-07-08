@@ -9,6 +9,8 @@ extern "C" {
     fn ke_await_event(intr_id: u32) -> c_int;
     fn ke_exit();
     fn ke_sys_health(ptr: *mut KerSysHealth);
+    fn ke_quadrature_encoder_init(pin_a: u32, pin_b: u32) -> c_int;
+    fn ke_quadrature_encoder_get(id: c_int, stat: *mut KerQuadEncoderStat) -> c_int;
 }
 
 pub fn ker_exit() {
@@ -78,6 +80,35 @@ pub fn ker_sys_health() -> KerSysHealth {
     let mut ret = KerSysHealth {idle_percent: 0};
     unsafe {
         ke_sys_health((&mut ret) as *mut KerSysHealth);
+    }
+    ret
+}
+
+pub fn ker_quadrature_encoder_init(pin_a: u32, pin_b: u32) -> Result<i32, i32> {
+    unsafe {
+        let ret : i32 = ke_quadrature_encoder_init(pin_a, pin_b);
+        if ret < 0 {
+            Err(ret)
+        } else {
+            Ok(ret)
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct KerQuadEncoderStat {
+    forward_cnt: u64,
+    backward_cnt: u64,
+    invalid_1_cnt: u64,
+    invalid_2_cnt: u64,
+    debug: u64,
+}
+
+pub fn ker_quadrature_encoder_get(id: i32) -> KerQuadEncoderStat {
+    let mut ret = KerQuadEncoderStat {forward_cnt: 0, backward_cnt: 0, invalid_1_cnt: 0, invalid_2_cnt: 0, debug: 0};
+    unsafe {
+        ke_quadrature_encoder_get(id, (&mut ret) as *mut KerQuadEncoderStat);
     }
     ret
 }

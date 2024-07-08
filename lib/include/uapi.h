@@ -78,18 +78,6 @@ extern int ke_delay(int tid, int ticks);
 extern int ke_delay_until(int tid, int tick);
 
 /*
-0  success
-<0 error
-*/
-extern int ke_uart_write_reg(int channel, char reg, char data);
-
-/*
->=0 success. return register value
-<0  error
-*/
-extern int ke_uart_read_reg(int channel, char reg);
-
-/*
 >=0 new character from the given UART.
 -1  tid is not a valid uart server task.
 -2  uart server waitqueue is full.
@@ -136,5 +124,32 @@ mem_sz is just a number (internally we will cast it up to closest power of 2 and
 When alloc failed, return NULL
 */
 extern int ke_mmap(void **target, uint64_t mem_sz);
+
+/*
+Set up a quarature encoder and return the id
+*/
+extern int ke_quadrature_encoder_init(uint32_t pin_a, uint32_t pin_b);
+
+struct keQuadEncoderStat
+{
+  uint64_t forward_cnt;
+  uint64_t backward_cnt;
+  uint64_t invalid_1_cnt;
+  uint64_t invalid_2_cnt;
+  uint64_t debug;
+};
+
+static void ke_quad_encoder_stat_clear(struct keQuadEncoderStat* stat) {
+  stat->forward_cnt = 0;
+  stat->backward_cnt = 0;
+  stat->invalid_1_cnt = 0;
+  stat->invalid_2_cnt = 0;
+  stat->debug = 0;
+}
+
+/*
+Return the number of forward ticks (can be negative)
+*/
+extern int ke_quadrature_encoder_get(int id, struct keQuadEncoderStat * stat);
 
 #endif
