@@ -199,19 +199,22 @@ void k_sys_health(struct keSysHealth *health)
   kg_current_td->syscall_retval = 0;
 }
 
-void k_uart_write_reg(int channel, char reg, char data)
-{
-  // uart_write_register(0, channel, reg, data);
+void k_quadrature_encoder_init(uint32_t pin_a, uint32_t pin_b) {
   DEBUG_PRINT("\r\n");
-  kg_current_td->syscall_retval = 0;
+  int id = encoder_init(&kg_gs->encoder_mgr, pin_a, pin_b);
+  kg_current_td->syscall_retval = id;
 }
 
-void k_uart_read_reg(int channel, char reg)
-{
-  // char data = uart_read_register(0, channel, reg);
+void k_quadrature_encoder_get(int id, struct keQuadEncoderStat * stat) {
   DEBUG_PRINT("\r\n");
-  // kg_current_td->syscall_retval = data;
-  kg_current_td->syscall_retval = 0;
+  struct kQuadEncoder * encoder = get_encoder(&kg_gs->encoder_mgr, id);
+  if (encoder == NULL) {
+    kg_current_td->syscall_retval = 0;
+  } else {
+    kg_current_td->syscall_retval = 0;
+    *stat = encoder->stat;
+    ke_quad_encoder_stat_clear(&encoder->stat);
+  }
 }
 
 void k_print_raw(const char * msg, int len)

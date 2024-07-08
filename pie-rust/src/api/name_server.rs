@@ -2,6 +2,7 @@ pub use msgbox_macro::*;
 pub use crate::sys::msgbox::*;
 pub use crate::sys::types::*;
 pub use crate::println;
+use crate::api::clock::*;
 
 pub const NS_NAME_LIMIT : usize = 64;
 pub const NS_TID : Tid = 2;
@@ -33,7 +34,7 @@ enum NsRespRecvEnum<'a> {
 const NS_SENDBOX_SZ : usize = NS_NAME_LIMIT + 64;
 const NS_RECVBOX_SZ : usize = 64;
 
-fn ns_get_loop(name: &str, wait: u32, cnt: i32) -> Option<Tid> {
+fn ns_get_loop(name: &str, cnt: i32) -> Option<Tid> {
     let name_bytes = name.as_bytes();
     let mut ns_sendbox : SendBox<NS_SENDBOX_SZ> = SendBox::default();
     let mut ns_recvbox : RecvBox<NS_RECVBOX_SZ> = RecvBox::default();
@@ -65,15 +66,16 @@ fn ns_get_loop(name: &str, wait: u32, cnt: i32) -> Option<Tid> {
         println!("Waiting for NsGet {name}");
 
         // wait ticks
+        wait_ticks(10);
     }
 }
 
 pub fn ns_get(name: &str) -> Option<Tid> {
-    ns_get_loop(name, 0, 1)
+    ns_get_loop(name, 1)
 }
 
-pub fn ns_get_wait(name: &str, wait: u32) -> Tid {
-    ns_get_loop(name, wait, -1).unwrap()
+pub fn ns_get_wait(name: &str) -> Tid {
+    ns_get_loop(name, 50).unwrap()
 }
 
 pub fn ns_set(name: &str) -> Result<Tid, ()> {

@@ -42,10 +42,14 @@ pub extern "C" fn _start() {
     let a_state = [0, 1, 0, 0];
     let b_state = [0, 0, 0, 1];
 
+    let pwm_pin = 18;
+    let in1_pin = 14;
+    let in2_pin = 15;
+
     unsafe {
-        setup_gpio(12, 0x01, 0x02); // PINOUT, PULLUP
-        setup_gpio(20, 0x01, 0x02); // PINOUT, PULLUP
-        setup_gpio(21, 0x01, 0x02); // PINOUT, PULLUP
+        setup_gpio(pwm_pin, 0x01, 0x02); // PINOUT, PULLUP
+        setup_gpio(in1_pin, 0x01, 0x02); // PINOUT, PULLUP
+        setup_gpio(in2_pin, 0x01, 0x02); // PINOUT, PULLUP
     }
 
     loop {
@@ -68,32 +72,32 @@ pub extern "C" fn _start() {
             if pwm_state[i] == 0 {
                 // clear the pin
                 unsafe {
-                    clear_outpin_gpio(12);
+                    clear_outpin_gpio(pwm_pin);
                 }
             } else {
                 // set the pin
                 unsafe {
-                    set_outpin_gpio(12);
+                    set_outpin_gpio(pwm_pin);
                 }
             }
 
             if a_state[i] == 0 {
                 unsafe {
-                    clear_outpin_gpio(20);
+                    clear_outpin_gpio(in1_pin);
                 } 
             } else {
                 unsafe {
-                    set_outpin_gpio(20);
+                    set_outpin_gpio(in1_pin);
                 }
             }
 
             if b_state[i] == 0 {
                 unsafe {
-                    clear_outpin_gpio(21);
+                    clear_outpin_gpio(in2_pin);
                 } 
             } else {
                 unsafe {
-                    set_outpin_gpio(21);
+                    set_outpin_gpio(in2_pin);
                 }
             }
         }        

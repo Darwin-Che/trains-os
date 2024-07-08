@@ -397,7 +397,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                         /* CPU Usage */
                         let charac = global_gatt().charac_by_name("CPU Usage").unwrap();
                         let sys_health = ker_sys_health();
-                        global_gatt().att_write(charac.value_handle, &sys_health.idle_percent.to_le_bytes());
+                        global_gatt().att_write(charac.value_handle, &(sys_health.idle_percent as u64).to_le_bytes());
                         responder.update_trigger(acl_state.handle, &charac);
                     }
                     // Wait Until the next 1/2 second

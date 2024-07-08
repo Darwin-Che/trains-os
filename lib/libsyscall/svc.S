@@ -16,7 +16,7 @@ handler_branch ke_reply 7
 handler_branch ke_await_event 8
 handler_branch ke_mmap 9
 handler_branch ke_sys_health 10
-handler_branch ke_uart_write_reg 11
-handler_branch ke_uart_read_reg 12
+handler_branch ke_quadrature_encoder_init 11
+handler_branch ke_quadrature_encoder_get 12
 handler_branch ke_print_raw 13
 handler_branch ke_quit 14
