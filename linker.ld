@@ -139,5 +139,23 @@ SECTIONS {
     pie-rust/build/encoder_server_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(gatt_monitor_elf_start = .);
+  .gatt_monitor_elf : {
+    pie-rust/build/gatt_monitor_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(gatt_monitor_relay_elf_start = .);
+  .gatt_monitor_relay_elf : {
+    pie-rust/build/gatt_monitor_relay_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(commander_elf_start = .);
+  .commander_elf : {
+    pie-rust/build/commander_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }

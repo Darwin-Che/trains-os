@@ -110,7 +110,7 @@ pub fn derive_msg_trait(input: TokenStream) -> TokenStream {
 
                         // println!("RecvEnum::from_recv_bytes {:p} {}", obj, #struct_name_str_total_len);
 
-                        let mut array_fields = [ #(&mut obj.#fields_filtered_ident)* ];
+                        let mut array_fields = [ #(&mut obj.#fields_filtered_ident, )* ];
                         
                         AttachedArray::from_recv_bytes(
                             &mut array_fields,

@@ -36,7 +36,7 @@ pub extern "C" fn _start() {
     log!("[Encoder] encoder = {}", encoder);
     loop {
         let val = ker_quadrature_encoder_get(encoder);
-        log!("[Encoder] ker_quadrature_encoder_get {:?}", val);
+        // log!("[Encoder] ker_quadrature_encoder_get {:?}", val);
         wait_ticks(50); // Every 0.5 sec
     }
 }

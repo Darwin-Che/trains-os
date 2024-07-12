@@ -3,7 +3,7 @@ use heapless::Vec;
 use heapless::FnvIndexMap;
 
 type ErrorCode = u8;
-type HandleId = u16;
+pub type HandleId = u16;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum GattUuid {
@@ -267,6 +267,11 @@ impl Gatt {
     // Returns (ValueHandleId, Notify OR Indicate)
     pub fn charac_by_name(&self, name: &str) -> Option<GattCharac> {
         self.charac_map.get(name).copied()
+    }
+
+    // Returns name
+    pub fn name_by_value_handle(&self, value_handle_id: HandleId) -> Option<&'static str> {
+        self.value_handle_map.get(&value_handle_id).copied()
     }
 
     pub fn clear_subscription(&mut self) {

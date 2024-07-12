@@ -7,6 +7,7 @@ use rust_pie::api::name_server::*;
 use rust_pie::api::rpi_uart::*;
 use rust_pie::api::rpi_bluetooth::*;
 use rust_pie::api::clock::*;
+use rust_pie::api::gatt::*;
 use rust_pie::log;
 use rust_pie::sys::entry_args::*;
 use rust_pie::sys::syscall::*;
@@ -15,6 +16,8 @@ use rust_pie::sys::gatt::*;
 use core::cell::SyncUnsafeCell;
 
 use heapless::Vec;
+use heapless::FnvIndexMap;
+use heapless::Entry;
 
 const DEBUG: bool = true;
 
@@ -33,6 +36,7 @@ enum RecvEnum<'a> {
     HciLeConnectionComplete(&'a mut HciLeConnectionComplete),
     ClockWaitResp(&'a mut ClockWaitResp),
     HciDisconnectionComplete(&'a mut HciDisconnectionComplete),
+    GattServerMonitorReq(&'a mut GattServerMonitorReq<'a>),
 }
 
 const ATT_ERROR_RSP: u8 = 0x01;
@@ -100,7 +104,7 @@ impl Responder {
             return;
         }
 
-        log!("[GATT] [update_trigger] {}", charac.name);
+        // log!("[GATT] [update_trigger] {}", charac.name);
 
         let val_len = global_gatt().att_read(charac.value_handle).unwrap().att_val.len();
         let gatt_len = val_len + 3;
@@ -177,17 +181,41 @@ fn global_gatt_set() {
         (
             GattBuilderService{service_uuid: 0x0100u128.into()},
             &[
+                // Clock [tick(u64)]
                 GattBuilderCharac{name: Some("Clock"), charac_uuid: 0x0101u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
                     init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
+                // CPU Usage [tick(u64)]
                 GattBuilderCharac{name: Some("CPU Usage"), charac_uuid: 0x0102u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
                     init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
+                // Cmd Input [id(u64), cmd(str)]
+                GattBuilderCharac{name: Some("Cmd Input"), charac_uuid: 0x0103u128.into(), property: CHARAC_PROPERTY_WRITE,
+                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
+                // Cmd Ack [id(u64), tick(u64)]
+                GattBuilderCharac{name: Some("Cmd Ack"), charac_uuid: 0x0104u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
+                    init_val: Some(Vec::from_slice(&[0; 16]).unwrap())},
+                // BLog [tick(u64), log(str)]
+                GattBuilderCharac{name: Some("Msg"), charac_uuid: 0x0105u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
+                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())}
             ]
         )
     ]));
 }
 
-/* LOCAL DATA */
-struct LocalData {}
+/* Monitor Map (ValueHandleId => [MonitorTid])*/
+
+type MonitorMap = FnvIndexMap<HandleId, Vec<Tid, 32>, 256>;
+
+static GLOBAL_MONITOR_MAP: SyncUnsafeCell<Option<MonitorMap>> = SyncUnsafeCell::new(None);
+
+fn global_monitor_map() -> &'static mut MonitorMap {
+    let m : &mut Option<MonitorMap> = unsafe { &mut *GLOBAL_MONITOR_MAP.get() };
+    m.as_mut().unwrap()
+}
+
+fn global_monitor_map_set() {
+    let m : &mut Option<MonitorMap> = unsafe { &mut *GLOBAL_MONITOR_MAP.get() };
+    *m = Some(MonitorMap::new());
+}
 
 #[no_mangle]
 pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
@@ -204,6 +232,8 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
 
     global_gatt_set();
     global_gatt().print_attr_vec();
+
+    global_monitor_map_set();
 
     loop {
         let sender_tid = ker_recv(&mut recv_box);
@@ -329,6 +359,19 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                             0x13, // ATT_WRITE_RSP
                         ]);
 
+                        // If the handle is the value handle for any charac, notify the local monitors
+                        if let Some(monitors) = global_monitor_map().get_mut(&handle_id) {
+                            let mut monitor_resp = SendCtx::<GattServerMonitorResp>::new(&mut send_box).unwrap();
+                            monitor_resp.bytes = monitor_resp.attach_array(packet.data.len() - 3).unwrap();
+                            monitor_resp.bytes.copy_from_slice(&packet.data[3..]);
+                            
+                            for m in monitors.iter() {
+                                ker_reply(*m, &send_box).unwrap();
+                            }
+
+                            monitors.clear();
+                        }
+
                         // If it sets any notifications, we need to send the current value over
                         if let Some(charac) = global_gatt().get_charac_by_client_config_handle(handle_id) {
                             responder.update_trigger(acl_state.handle, &charac);
@@ -363,6 +406,21 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                 }
                 acl_state.last_packet_tick = get_cur_tick();
             },
+            // Add Monitor
+            Some(RecvEnum::GattServerMonitorReq(GattServerMonitorReq{name: name})) => {
+                if let Some(charac) = global_gatt().charac_by_name(core::str::from_utf8(&name).unwrap()) {
+                    match global_monitor_map().entry(charac.value_handle) {
+                        Entry::Vacant(v) => {
+                            v.insert(Vec::from_slice(&[sender_tid]).unwrap()).unwrap();
+                        },
+                        Entry::Occupied(mut o) => {
+                            o.get_mut().push(sender_tid).unwrap();
+                        },
+                    }
+                } else {
+                    log!("[GATT] GattServerMonitorReq cannot be served with {}", core::str::from_utf8(&name).unwrap());
+                }
+            },
             // Connection Complete Event
             Some(RecvEnum::HciLeConnectionComplete(cc)) => {
                 SendCtx::<HciReply>::new(&mut send_box).unwrap();
@@ -383,7 +441,7 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
 
                 // Turn off any notification
                 global_gatt().clear_subscription();
-            }
+            },
             // Check if Timeout happened
             Some(RecvEnum::ClockWaitResp(_)) => {
                 if sender_tid == tid_clock {

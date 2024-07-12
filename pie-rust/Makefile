@@ -14,6 +14,9 @@ PROGRAMS+=clock_server
 PROGRAMS+=clock_server_helper
 PROGRAMS+=clock_notifier
 PROGRAMS+=encoder_server
+PROGRAMS+=gatt_monitor
+PROGRAMS+=gatt_monitor_relay
+PROGRAMS+=commander
 
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 
