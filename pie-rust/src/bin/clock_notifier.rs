@@ -3,14 +3,11 @@
 
 use core::panic::PanicInfo;
 use rust_pie::api::name_server::*;
-use rust_pie::api::rpi_uart::*;
-use rust_pie::api::rpi_bluetooth::*;
 use rust_pie::api::clock::*;
 use rust_pie::log;
 use rust_pie::println;
 use rust_pie::sys::entry_args::*;
 use rust_pie::sys::syscall::*;
-use rust_pie::sys::rpi::*;
 
 const DEBUG: bool = false;
 

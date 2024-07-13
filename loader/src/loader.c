@@ -152,7 +152,7 @@ void load_elf(const char *args, size_t args_len)
 
   // Step 5 : Jump to function start
   EntryFunc entry_func = (EntryFunc) (elf_reader.e_hdr->e_entry + vaddr_diff);
-  printf("LOADER : Jump to %x\r\n", entry_func);
+  DEBUG_LOADER_PRINTF("LOADER : Jump to %x\r\n", entry_func);
 
   // DEBUG
   // const uint32_t * peek_data = (const uint32_t *) entry_func;

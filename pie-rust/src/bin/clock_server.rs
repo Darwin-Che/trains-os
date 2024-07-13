@@ -40,7 +40,7 @@ struct WaitReq {
 #[no_mangle]
 pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
     ns_set("clock_server").unwrap();
-    let mut notifier = ker_create(0, b"PROGRAM\0clock_notifier\0").unwrap();
+    ker_create(0, b"PROGRAM\0clock_notifier\0").unwrap();
 
     let clock = RpiClock::new();
     let mut t = clock.cur_u64();

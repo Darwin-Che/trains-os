@@ -203,7 +203,7 @@ impl Gatt {
     pub fn att_write(&mut self, handle: HandleId, bytes: &[u8]) -> Result<(), u8> {
         let attr = self.attr_vec.get_mut(handle as usize).ok_or(0)?;
         attr.att_val.clear();
-        attr.att_val.extend_from_slice(bytes);
+        attr.att_val.extend_from_slice(bytes).unwrap();
         Ok(())
     }
 

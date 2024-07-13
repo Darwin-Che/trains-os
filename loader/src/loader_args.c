@@ -90,12 +90,12 @@ struct LoaderArgs resolve_args(const char * args, uint64_t args_len)
     const char * key = &args[idx];
     uint64_t key_len = 0;
     while (key[key_len++] != '\0') {}
-    printf("LOADER_ARGS KEY = %s\r\n", key);
+    DEBUG_LOADER_PRINTF("LOADER_ARGS KEY = %s\r\n", key);
 
     const char * val = &args[idx + key_len];
     uint64_t val_len = 0;
     while (val[val_len++] != '\0') {}
-    printf("LOADER_ARGS VALUE = %s\r\n", val);
+    DEBUG_LOADER_PRINTF("LOADER_ARGS VALUE = %s\r\n", val);
 
     // Check key=PROGRAM
     if (util_strcmp(key, "PROGRAM")) {

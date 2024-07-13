@@ -38,7 +38,7 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
     let name = args.get("name").unwrap();
 
     let mut create_args: String<256> = String::new();
-    write!(&mut create_args, "PROGRAM\0gatt_monitor\0name\0{}\0", name);
+    write!(&mut create_args, "PROGRAM\0gatt_monitor\0name\0{}\0", name).unwrap();
 
     let monitor = ker_create(3, create_args.as_bytes()).unwrap();
 
