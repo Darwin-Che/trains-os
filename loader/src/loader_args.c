@@ -17,6 +17,9 @@ extern char clock_server_elf_start[];
 extern char clock_server_helper_elf_start[];
 extern char clock_notifier_elf_start[];
 extern char encoder_server_elf_start[];
+extern char gatt_monitor_elf_start[];
+extern char gatt_monitor_relay_elf_start[];
+extern char commander_elf_start[];
 
 static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "user_entry")) {
@@ -61,8 +64,17 @@ static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "clock_notifier")) {
     return clock_notifier_elf_start;
   }
-    if (util_strcmp(program_name, "encoder_server")) {
+  if (util_strcmp(program_name, "encoder_server")) {
     return encoder_server_elf_start;
+  }
+  if (util_strcmp(program_name, "gatt_monitor")) {
+    return gatt_monitor_elf_start;
+  }
+  if (util_strcmp(program_name, "gatt_monitor_relay")) {
+    return gatt_monitor_relay_elf_start;
+  }
+  if (util_strcmp(program_name, "commander")) {
+    return commander_elf_start;
   }
   return NULL;
 }
@@ -78,12 +90,12 @@ struct LoaderArgs resolve_args(const char * args, uint64_t args_len)
     const char * key = &args[idx];
     uint64_t key_len = 0;
     while (key[key_len++] != '\0') {}
-    printf("LOADER_ARGS KEY = %s\r\n", key);
+    DEBUG_LOADER_PRINTF("LOADER_ARGS KEY = %s\r\n", key);
 
     const char * val = &args[idx + key_len];
     uint64_t val_len = 0;
     while (val[val_len++] != '\0') {}
-    printf("LOADER_ARGS VALUE = %s\r\n", val);
+    DEBUG_LOADER_PRINTF("LOADER_ARGS VALUE = %s\r\n", val);
 
     // Check key=PROGRAM
     if (util_strcmp(key, "PROGRAM")) {

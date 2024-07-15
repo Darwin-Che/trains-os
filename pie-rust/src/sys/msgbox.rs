@@ -52,7 +52,7 @@ pub trait RecvEnumTrait<'a> {
 #[repr(align(64))]
 pub struct SendBox<const N: usize = DEFAULT_BOX_SIZE> {
     len: usize,
-    send_buf: [u8; N],
+    pub send_buf: [u8; N],
 }
 
 impl<const N: usize> Default for SendBox<N> {
@@ -205,7 +205,7 @@ impl<'a, I> AttachedArray<'a, I> {
             // Update the buf to the rest of the array
             buf = split_buf.1;
             // Update buf offset with the segment we just cut off
-            offset = start + aa.cnt * mem::size_of::<I>() as u32;
+            offset = aa.idx + aa.cnt * mem::size_of::<I>() as u32;
         }
     }
 }

@@ -3,7 +3,7 @@ use heapless::Vec;
 use heapless::FnvIndexMap;
 
 type ErrorCode = u8;
-type HandleId = u16;
+pub type HandleId = u16;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum GattUuid {
@@ -203,7 +203,7 @@ impl Gatt {
     pub fn att_write(&mut self, handle: HandleId, bytes: &[u8]) -> Result<(), u8> {
         let attr = self.attr_vec.get_mut(handle as usize).ok_or(0)?;
         attr.att_val.clear();
-        attr.att_val.extend_from_slice(bytes);
+        attr.att_val.extend_from_slice(bytes).unwrap();
         Ok(())
     }
 
@@ -267,6 +267,11 @@ impl Gatt {
     // Returns (ValueHandleId, Notify OR Indicate)
     pub fn charac_by_name(&self, name: &str) -> Option<GattCharac> {
         self.charac_map.get(name).copied()
+    }
+
+    // Returns name
+    pub fn name_by_value_handle(&self, value_handle_id: HandleId) -> Option<&'static str> {
+        self.value_handle_map.get(&value_handle_id).copied()
     }
 
     pub fn clear_subscription(&mut self) {
