@@ -3,18 +3,18 @@ use volatile_register::{RW, RO};
 type GpioSetting = u32;
 type GpioResistor = u32;
 
-const GPIO_SETTING_INPUT : GpioSetting = 0x00;
-const GPIO_SETTING_OUTPUT : GpioSetting = 0x01;
-const GPIO_SETTING_ALTFN0 : GpioSetting = 0x04;
-const GPIO_SETTING_ALTFN1 : GpioSetting = 0x05;
-const GPIO_SETTING_ALTFN2 : GpioSetting = 0x06;
-const GPIO_SETTING_ALTFN3 : GpioSetting = 0x07;
-const GPIO_SETTING_ALTFN4 : GpioSetting = 0x03;
-const GPIO_SETTING_ALTFN5 : GpioSetting = 0x02;
+pub const GPIO_SETTING_INPUT : GpioSetting = 0x00;
+pub const GPIO_SETTING_OUTPUT : GpioSetting = 0x01;
+pub const GPIO_SETTING_ALTFN0 : GpioSetting = 0x04;
+pub const GPIO_SETTING_ALTFN1 : GpioSetting = 0x05;
+pub const GPIO_SETTING_ALTFN2 : GpioSetting = 0x06;
+pub const GPIO_SETTING_ALTFN3 : GpioSetting = 0x07;
+pub const GPIO_SETTING_ALTFN4 : GpioSetting = 0x03;
+pub const GPIO_SETTING_ALTFN5 : GpioSetting = 0x02;
 
-const GPIO_RESISTOR_NONE : GpioResistor = 0x00;
-const GPIO_RESISTOR_PUP : GpioResistor = 0x01;
-const GPIO_RESISTOR_PDP : GpioResistor = 0x02;
+pub const GPIO_RESISTOR_NONE : GpioResistor = 0x00;
+pub const GPIO_RESISTOR_PUP : GpioResistor = 0x01;
+pub const GPIO_RESISTOR_PDP : GpioResistor = 0x02;
 
 #[link(name = "base")]
 extern "C" {
@@ -101,7 +101,7 @@ static RPI_UART_GPIO_PINS: &'static [RpiUartGpioPins] = &[
 ];
 
 impl RpiUart {
-    pub fn new(uart_id: u32, baudrate: u64) -> &'static mut RpiUart {
+    pub fn new(uart_id: u32, baudrate: u64, flow_control: bool) -> &'static mut RpiUart {
         assert!(uart_id != 1);
 
         // Setup GPIO
@@ -110,8 +110,10 @@ impl RpiUart {
         unsafe {
             setup_gpio(pins.tx, pins.setting, pins.resistor);
             setup_gpio(pins.rx, pins.setting, pins.resistor);
-            setup_gpio(pins.cts, pins.setting, pins.resistor);
-            setup_gpio(pins.rts, pins.setting, pins.resistor);
+            if flow_control {
+                setup_gpio(pins.cts, pins.setting, pins.resistor);
+                setup_gpio(pins.rts, pins.setting, pins.resistor);
+            }
         }
 
         let uart = unsafe {

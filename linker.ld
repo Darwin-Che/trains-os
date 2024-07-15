@@ -157,5 +157,17 @@ SECTIONS {
     pie-rust/build/commander_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(imu_server_elf_start = .);
+  .imu_server_elf : {
+    pie-rust/build/imu_server_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(imu_collector_elf_start = .);
+  .imu_collector_elf : {
+    pie-rust/build/imu_collector_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }

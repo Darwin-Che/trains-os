@@ -17,6 +17,8 @@ PROGRAMS+=encoder_server
 PROGRAMS+=gatt_monitor
 PROGRAMS+=gatt_monitor_relay
 PROGRAMS+=commander
+PROGRAMS+=imu_server
+PROGRAMS+=imu_collector
 
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 

@@ -87,12 +87,18 @@ pub fn ns_set(name: &str) -> Result<Tid, ()> {
         let mut set_req = SendCtx::<NsSetReq>::new(&mut ns_sendbox).unwrap();
         set_req.name = set_req.attach_array(name_bytes.len()).unwrap();
         set_req.name.copy_from_slice(name_bytes);
-    } 
-
-    ker_send(NS_TID, &ns_sendbox, &mut ns_recvbox).unwrap();
-
-    match NsRespRecvEnum::from_recv_bytes(&mut ns_recvbox) {
-        Some(NsRespRecvEnum::NsResp( NsResp{tid: Some(tid)} )) => Ok(*tid),
-        _ => Err(()),
     }
+
+    for i in 0..50 {
+        ker_send(NS_TID, &ns_sendbox, &mut ns_recvbox).unwrap();
+
+        match NsRespRecvEnum::from_recv_bytes(&mut ns_recvbox) {
+            Some(NsRespRecvEnum::NsResp( NsResp{tid: Some(tid)} )) => {
+                return Ok(*tid);
+            },
+            _ => {},
+        };
+    }
+
+    return Err(());
 }

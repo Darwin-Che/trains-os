@@ -4,6 +4,7 @@
 use core::panic::PanicInfo;
 use rust_pie::println;
 use rust_pie::sys::syscall::*;
+use rust_pie::sys::types::*;
 
 /// This function is called on panic.
 #[panic_handler]
@@ -20,20 +21,22 @@ pub extern "C" fn _start() {
     rust_pie::sys::print_raw::ker_print_raw(msg1);
 
     let child_args = "PROGRAM\0clock_server\0".as_bytes();
-    let child_tid = ker_create(0, child_args).unwrap();
-    println!("child_tid = {child_tid}"); 
+    let child_tid = ker_create(PRIO_CLOCK, child_args).unwrap();
+    // println!("child_tid = {child_tid}"); 
 
     let child_args = "PROGRAM\0rpi\0".as_bytes();
     let child_tid = ker_create(3, child_args).unwrap();
-    println!("child_tid = {child_tid}"); 
+    // println!("child_tid = {child_tid}"); 
 
     let child_args = "PROGRAM\0encoder_server\0".as_bytes();
     let child_tid = ker_create(2, child_args).unwrap();
-    println!("child_tid = {child_tid}"); 
+    // println!("child_tid = {child_tid}"); 
 
     let child_args = "PROGRAM\0commander\0".as_bytes();
     let child_tid = ker_create(5, child_args).unwrap();
-    println!("child_tid = {child_tid}"); 
+    // println!("child_tid = {child_tid}"); 
+
+    ker_create(3, b"PROGRAM\0imu_server\0").unwrap();
 
     rust_pie::sys::print_raw::ker_print_raw(msg2);
 }

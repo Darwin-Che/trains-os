@@ -20,6 +20,8 @@ extern char encoder_server_elf_start[];
 extern char gatt_monitor_elf_start[];
 extern char gatt_monitor_relay_elf_start[];
 extern char commander_elf_start[];
+extern char imu_server_elf_start[];
+extern char imu_collector_elf_start[];
 
 static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "user_entry")) {
@@ -75,6 +77,12 @@ static const char * resolve_elf_start(const char * program_name) {
   }
   if (util_strcmp(program_name, "commander")) {
     return commander_elf_start;
+  }
+  if (util_strcmp(program_name, "imu_server")) {
+    return imu_server_elf_start;
+  }
+  if (util_strcmp(program_name, "imu_collector")) {
+    return imu_collector_elf_start;
   }
   return NULL;
 }

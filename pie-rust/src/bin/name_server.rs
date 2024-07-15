@@ -123,9 +123,7 @@ fn handle_set_req(name_map: &mut NameMap, set_req: &mut NsSetReq, sender_tid: Ti
     }
 
     if let Some(_tid) = name_map.get(&hash_result) {
-        if DEBUG {
-            println!("Name Server : Hash Collision Detected for {:?} !!!", array_bytes);
-        }
+        println!("Name Server : Hash Collision Detected for {:?} !!!", array_bytes);
         return None;
     }
 

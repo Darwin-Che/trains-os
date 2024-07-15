@@ -179,7 +179,7 @@ fn global_gatt_set() {
                 // GattBuilderCharac{name: Some("ServiceChanged"), charac_uuid: 0x2a05u16.into(), property: CHARAC_PROPERTY_INDICATE,
                 //     init_val: Some(Vec::from_slice(&[0x00, 0x00, 0xff, 0xff]).unwrap())},
                 GattBuilderCharac{name: Some("DatabaseHash"), charac_uuid: 0x2b2au16.into(), property: CHARAC_PROPERTY_READ,
-                    init_val: Some(Vec::from_slice(&0u128.to_le_bytes()).unwrap())},
+                    init_val: Some(Vec::from_slice(&001u128.to_le_bytes()).unwrap())},
             ]
         ),
         (
@@ -199,7 +199,10 @@ fn global_gatt_set() {
                     init_val: Some(Vec::from_slice(&[0; 16]).unwrap())},
                 // BLog [tick(u64), log(str)]
                 GattBuilderCharac{name: Some("Msg"), charac_uuid: 0x0105u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
-                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())}
+                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
+                // IMU [tick(u64), IMU Struct]
+                GattBuilderCharac{name: Some("Imu"), charac_uuid: 0x0106u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
+                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
             ]
         )
     ]));
