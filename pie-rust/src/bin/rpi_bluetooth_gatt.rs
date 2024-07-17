@@ -9,6 +9,7 @@ use rust_pie::api::rpi_bluetooth::*;
 use rust_pie::api::clock::*;
 use rust_pie::api::gatt::*;
 use rust_pie::log;
+use rust_pie::logblk;
 use rust_pie::sys::entry_args::*;
 use rust_pie::sys::syscall::*;
 use rust_pie::sys::helper::*;
@@ -110,6 +111,8 @@ impl Responder {
             debug!("[GATT] [update_trigger] {} charac.client_config_handle == 0", charac.name);
             return;
         }
+
+        debug!("[GATT] [trigger] handle={} name={} client_config={:#02x}", charac.handle, charac.name, client_config);
 
         let val_len = global_gatt().att_read(charac.value_handle).unwrap().att_val.len();
         let gatt_len = val_len + 3;
@@ -379,10 +382,10 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                             monitors.clear();
                         }
 
-                        // If it sets any notifications, we need to send the current value over
-                        // if let Some(charac) = global_gatt().get_charac_by_client_config_handle(handle_id) {
-                        //     responder.update_trigger(acl_state.handle, &charac);
-                        // }
+                        // If it sets any notifications
+                        if let Some(charac) = global_gatt().get_charac_by_client_config_handle(handle_id) {
+                            log!("[GATT] [ATT_WRITE_REQ] set NOTI/IND on {}", handle_id);
+                        }
                     },
                     // ATT_HANDLE_VALUE_CFM
                     0x1e => {

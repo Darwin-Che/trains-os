@@ -7,6 +7,7 @@ use rust_pie::sys::syscall::*;
 use rust_pie::api::imu::*;
 use rust_pie::api::name_server::*;
 use rust_pie::api::gatt::*;
+use rust_pie::api::clock::*;
 
 /// This function is called on panic.
 #[panic_handler]
@@ -38,6 +39,7 @@ pub extern "C" fn _start() {
         yaw: 0, pitch: 0, roll: 0, x_accel: 0, y_accel: 0, z_accel: 0,
     };
 
+    let mut idx = 0u64;
     loop {
         let sender_tid = ker_recv(&mut recv_box);
 
@@ -57,13 +59,18 @@ pub extern "C" fn _start() {
                 imu_cur.y_accel = imu_raw.y_accel;
                 imu_cur.z_accel = imu_raw.z_accel;
 
-                let mut imu_update = SendCtx::<GattServerPublishReq>::new(&mut send_box).unwrap();
-                imu_update.name = imu_update.attach_array(b"Imu".len()).unwrap();
-                imu_update.name.copy_from_slice(b"Imu");
-                imu_update.bytes = imu_update.attach_array(12).unwrap();
-                imu_update.bytes.copy_from_slice(&imu_cur.to_bytes());
-
-                ker_send(gatt_server_tid, &send_box, &mut recv_box).unwrap();
+                idx += 1;
+                if idx == 10 {
+                    let mut imu_update = SendCtx::<GattServerPublishReq>::new(&mut send_box).unwrap();
+                    imu_update.name = imu_update.attach_array(b"Imu".len()).unwrap();
+                    imu_update.name.copy_from_slice(b"Imu");
+                    imu_update.bytes = imu_update.attach_array(12 + 8).unwrap();
+                    imu_update.bytes[0..8].copy_from_slice(&get_cur_tick().to_le_bytes());
+                    imu_update.bytes[8..].copy_from_slice(&imu_cur.to_bytes());
+        
+                    ker_send(gatt_server_tid, &send_box, &mut recv_box).unwrap();
+                    idx = 0;
+                }
             },
             None => panic!("[IMU Server] Received None !"),
         }
