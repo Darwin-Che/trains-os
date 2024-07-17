@@ -5,5 +5,6 @@ pub mod syscall;
 pub mod rpi;
 pub mod entry_args;
 pub mod log;
+pub mod bog;
 pub mod helper;
 pub mod gatt;

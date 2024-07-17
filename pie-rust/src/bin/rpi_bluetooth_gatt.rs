@@ -9,6 +9,7 @@ use rust_pie::api::rpi_bluetooth::*;
 use rust_pie::api::clock::*;
 use rust_pie::api::gatt::*;
 use rust_pie::log;
+use rust_pie::logblk;
 use rust_pie::sys::entry_args::*;
 use rust_pie::sys::syscall::*;
 use rust_pie::sys::helper::*;
@@ -111,6 +112,8 @@ impl Responder {
             return;
         }
 
+        debug!("[GATT] [trigger] handle={} name={} client_config={:#02x}", charac.handle, charac.name, client_config);
+
         let val_len = global_gatt().att_read(charac.value_handle).unwrap().att_val.len();
         let gatt_len = val_len + 3;
         let acl_len = gatt_len + 4;
@@ -179,7 +182,7 @@ fn global_gatt_set() {
                 // GattBuilderCharac{name: Some("ServiceChanged"), charac_uuid: 0x2a05u16.into(), property: CHARAC_PROPERTY_INDICATE,
                 //     init_val: Some(Vec::from_slice(&[0x00, 0x00, 0xff, 0xff]).unwrap())},
                 GattBuilderCharac{name: Some("DatabaseHash"), charac_uuid: 0x2b2au16.into(), property: CHARAC_PROPERTY_READ,
-                    init_val: Some(Vec::from_slice(&0u128.to_le_bytes()).unwrap())},
+                    init_val: Some(Vec::from_slice(&001u128.to_le_bytes()).unwrap())},
             ]
         ),
         (
@@ -199,7 +202,10 @@ fn global_gatt_set() {
                     init_val: Some(Vec::from_slice(&[0; 16]).unwrap())},
                 // BLog [tick(u64), log(str)]
                 GattBuilderCharac{name: Some("Msg"), charac_uuid: 0x0105u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
-                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())}
+                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
+                // IMU [tick(u64), IMU Struct]
+                GattBuilderCharac{name: Some("Imu"), charac_uuid: 0x0106u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
+                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
             ]
         )
     ]));
@@ -376,10 +382,10 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                             monitors.clear();
                         }
 
-                        // If it sets any notifications, we need to send the current value over
-                        // if let Some(charac) = global_gatt().get_charac_by_client_config_handle(handle_id) {
-                        //     responder.update_trigger(acl_state.handle, &charac);
-                        // }
+                        // If it sets any notifications
+                        if let Some(charac) = global_gatt().get_charac_by_client_config_handle(handle_id) {
+                            log!("[GATT] [ATT_WRITE_REQ] set NOTI/IND on {}", handle_id);
+                        }
                     },
                     // ATT_HANDLE_VALUE_CFM
                     0x1e => {

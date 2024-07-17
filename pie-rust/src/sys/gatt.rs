@@ -1,4 +1,5 @@
 use crate::log;
+use crate::logblk;
 use heapless::Vec;
 use heapless::FnvIndexMap;
 
@@ -115,9 +116,9 @@ impl Gatt {
     pub fn print_attr_vec(&self) {
         for i in 0..self.attr_vec.len() {
             if let Some(name) = self.value_handle_map.get(&(i as u16)) {
-                log!("[GATT PRINT] ATT_{}_{} = {:?}", i, name, &self.attr_vec[i]);
+                logblk!("[GATT PRINT] ATT_{}_{} = {:?}", i, name, &self.attr_vec[i]);
             } else {
-                log!("[GATT PRINT] ATT_{} = {:?}", i, &self.attr_vec[i]);
+                logblk!("[GATT PRINT] ATT_{} = {:?}", i, &self.attr_vec[i]);
             }
         }
     }

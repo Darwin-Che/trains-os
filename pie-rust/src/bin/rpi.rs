@@ -27,16 +27,13 @@ enum RecvEnum<'a> {
 
 #[no_mangle]
 pub extern "C" fn _start() {
-    ker_create(2, b"PROGRAM\0rpi_uart\0ID\02\0").unwrap();
-    ker_create(2, b"PROGRAM\0rpi_uart\0ID\00\0").unwrap();
-    ker_create(2, b"PROGRAM\0rpi_bluetooth_commander\0").unwrap();
-    ker_create(2, b"PROGRAM\0rpi_bluetooth_gatt\0").unwrap();
-    ker_create(2, b"PROGRAM\0rpi_bluetooth_hci_rx\0").unwrap();
+    ker_create(PRIO_UART, b"PROGRAM\0rpi_uart\0ID\02\0").unwrap();
+    ker_create(PRIO_UART, b"PROGRAM\0rpi_uart\0ID\00\0flow_control\0true\0").unwrap();
+    ker_create(4, b"PROGRAM\0rpi_bluetooth_commander\0").unwrap();
+    ker_create(4, b"PROGRAM\0rpi_bluetooth_gatt\0").unwrap();
+    ker_create(4, b"PROGRAM\0rpi_bluetooth_hci_rx\0").unwrap();
 
     let tid_timeout = ker_create(2, b"PROGRAM\0clock_server_helper\0").unwrap();
-
-    let mut recv_box: RecvBox = RecvBox::default();
-    let mut send_box: SendBox = SendBox::default();
 
     let pwm_state = [0, 1, 0, 1];
     let a_state = [0, 1, 0, 0];
@@ -110,34 +107,5 @@ pub extern "C" fn _start() {
     //     ker_send(clock_server, &send_box, &mut recv_box);
 
     //     log!("[TEST] Clock Server Wakeup");
-    // }
-
-    // let mut arr = [[0; 19]; 100];
-    // let rx_tid = ker_create(2, b"PROGRAM\0rpi_uart\0ID\04\0").unwrap();
-
-    // {
-    //     let mut req = SendCtx::<RpiUartRxReq>::new(&mut send_box).unwrap();
-    //     req.len = 19;
-    // }
-
-    // for i in 0..100 {
-    //     ker_send(rx_tid, &send_box, &mut recv_box).unwrap();
-
-    //     match RecvEnum::from_recv_bytes(&mut recv_box) {
-    //         Some(RecvEnum::RpiUartRxResp(resp)) => {
-    //             for j in 0..19 {
-    //                 arr[i][j] = resp.bytes[j];
-    //             }
-    //         },
-    //         None => println!("Rpi Uart Rx : Received None !"),
-    //     };
-    // }
-
-    // for i in 0..100 {
-    //     println!("{:X?}", arr[i]);
-    // }
-
-    // for i in 0..100 {
-    //     log!("COPY {:X?}", arr[i]);
     // }
 }

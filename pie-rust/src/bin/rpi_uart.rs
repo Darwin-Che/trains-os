@@ -7,6 +7,7 @@ use rust_pie::api::rpi_uart::*;
 use rust_pie::sys::syscall::*;
 use rust_pie::sys::rpi::*;
 use rust_pie::api::name_server;
+use rust_pie::api::clock::*;
 use rust_pie::sys::entry_args::*;
 
 use heapless::Deque;
@@ -62,15 +63,15 @@ struct State {
 }
 
 impl State {
-    pub fn new(uart_id: u32, baudrate: u64) -> Self {
-        let rpi_uart = RpiUart::new(uart_id, baudrate);
+    pub fn new(uart_id: u32, baudrate: u64, flow_control: bool) -> Self {
+        let rpi_uart = RpiUart::new(uart_id, baudrate, flow_control);
         rpi_uart.drain();
 
         Self {
             uart_id: uart_id,
             reply_box: SendBox::new(),
             rpi_uart: rpi_uart,
-            tid_intr: ker_create(2, b"PROGRAM\0rpi_uart_intr_broker\0").unwrap(),
+            tid_intr: ker_create(PRIO_UART - 1, b"PROGRAM\0rpi_uart_intr_broker\0").unwrap(),
             rx_queue: Deque::new(),
             rx_buf: Deque::new(),
             tx_buf: Deque::new(),
@@ -201,12 +202,16 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
     let uart_id_str = args.get("ID").unwrap();
     let uart_id: u32 = uart_id_str.parse().unwrap();
 
+    let flow_control = args.get("flow_control").is_some_and(|v| v == "true");
+
     let mut name: String<32> = String::new();
     name.push_str("rpi_uart_").unwrap();
     name.push_str(uart_id_str).unwrap();
     name_server::ns_set(name.as_str()).unwrap();
 
-    let mut state = State::new(uart_id, 115200);
+    let mut state = State::new(uart_id, 115200, flow_control);
+
+    wait_ticks(50);
 
     let mut recv_box: RecvBox = RecvBox::default();
     
