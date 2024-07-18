@@ -191,9 +191,9 @@ fn global_gatt_set() {
                 // Clock [tick(u64)]
                 GattBuilderCharac{name: Some("Clock"), charac_uuid: 0x0101u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
                     init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
-                // CPU Usage [tick(u64)]
+                // CPU Usage [tick(u64), usage(u64)]
                 GattBuilderCharac{name: Some("CPU Usage"), charac_uuid: 0x0102u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
-                    init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
+                    init_val: Some(Vec::from_slice(&[0; 16]).unwrap())},
                 // Cmd Input [id(u64), cmd(str)]
                 GattBuilderCharac{name: Some("Cmd Input"), charac_uuid: 0x0103u128.into(), property: CHARAC_PROPERTY_WRITE,
                     init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
@@ -206,6 +206,9 @@ fn global_gatt_set() {
                 // IMU [tick(u64), IMU Struct]
                 GattBuilderCharac{name: Some("Imu"), charac_uuid: 0x0106u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
                     init_val: Some(Vec::from_slice(&0u64.to_le_bytes()).unwrap())},
+                // Encoder Status [tick(u64), left_rps(u64), right_rps(u64)]
+                GattBuilderCharac{name: Some("Encoder"), charac_uuid: 0x0107u128.into(), property: CHARAC_PROPERTY_READ | CHARAC_PROPERTY_NOTIFY,
+                    init_val: Some(Vec::from_slice(&[0; 24]).unwrap())},
             ]
         )
     ]));
@@ -479,7 +482,10 @@ pub extern "C" fn _start(_ptr: *const c_char, _len: usize) {
                         /* CPU Usage */
                         let charac = global_gatt().charac_by_name("CPU Usage").unwrap();
                         let sys_health = ker_sys_health();
-                        global_gatt().att_write(charac.value_handle, &(sys_health.idle_percent as u64).to_le_bytes()).unwrap();
+                        let mut bytes = [0; 16];
+                        bytes[0..8].copy_from_slice(&cur_tick.to_le_bytes());
+                        bytes[8..16].copy_from_slice(&(sys_health.idle_percent as u64).to_le_bytes());
+                        global_gatt().att_write(charac.value_handle, &bytes).unwrap();
                         responder.update_trigger(acl_state.handle, &charac);
                     }
                     // Wait Until the next 1/2 second
