@@ -6,9 +6,11 @@ use rust_pie::api::gatt::*;
 use rust_pie::api::clock::*;
 use rust_pie::api::name_server::*;
 use rust_pie::api::imu::*;
+use rust_pie::api::motor::*;
 use rust_pie::log;
 use rust_pie::bog;
 use rust_pie::sys::syscall::*;
+use rust_pie::sys::rpi::*;
 
 use core::str;
 
@@ -27,6 +29,7 @@ const DEBUG: bool = false;
 enum RecvEnum<'a> {
     GattMonitorResp(&'a mut GattMonitorResp<'a>),
     ImuResp(&'a mut ImuResp),
+    MotorResp(&'a mut MotorResp),
 }
 
 const NAME_CMD_ACK: &[u8] = b"Cmd Ack";
@@ -71,7 +74,17 @@ pub extern "C" fn _start() {
 
                 ker_send(gatt_server, &send_box, &mut recv_box).unwrap();
 
-                cmd_execute(cmd);
+                if cmd == "imu" {
+                    cmd_execute_imu(cmd);
+                } else if cmd.starts_with("pwm") {
+                    let velo = cmd
+                        .strip_prefix("pwm").unwrap()
+                        .trim()
+                        .parse::<f64>().unwrap();
+
+                    cmd_execute_pwm(velo);
+                }
+
             },
             _ => {
                 panic!("[CMD] Unexpected RecvEnum");
@@ -80,21 +93,38 @@ pub extern "C" fn _start() {
     }
 }
 
-fn cmd_execute(cmd: &str) {
+fn cmd_execute_imu(cmd: &str) {
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
 
-    if cmd == "imu" {
-        let imu_server_tid = ns_get("imu_server").unwrap();
-        let imu_req = SendCtx::<ImuReq>::new(&mut send_box).unwrap();
-        ker_send(imu_server_tid, &send_box, &mut recv_box).unwrap();
-        match RecvEnum::from_recv_bytes(&mut recv_box) {
-            Some(RecvEnum::ImuResp(imu_resp)) => {
-                bog!("[CMD] {:?}", imu_resp);
-            },
-            _ => {
-                panic!("[CMD execute] Unexpected RecvEnum");
-            }
+    let imu_server_tid = ns_get("imu_server").unwrap();
+    let imu_req = SendCtx::<ImuReq>::new(&mut send_box).unwrap();
+    ker_send(imu_server_tid, &send_box, &mut recv_box).unwrap();
+    match RecvEnum::from_recv_bytes(&mut recv_box) {
+        Some(RecvEnum::ImuResp(imu_resp)) => {
+            bog!("[CMD] imu {:?}", imu_resp);
+        },
+        _ => {
+            panic!("[CMD execute] Unexpected RecvEnum");
+        }
+    }
+}
+
+fn cmd_execute_pwm(velo: f64) {
+    let mut send_box: SendBox = SendBox::default();
+    let mut recv_box: RecvBox = RecvBox::default();
+
+    let motor_server_tid = ns_get("motor_server").unwrap();
+    let mut motor_req = SendCtx::<MotorReq>::new(&mut send_box).unwrap();
+    motor_req.left = Some(velo);
+    motor_req.right = Some(velo);
+    ker_send(motor_server_tid, &send_box, &mut recv_box).unwrap();
+    match RecvEnum::from_recv_bytes(&mut recv_box) {
+        Some(RecvEnum::MotorResp(motor_resp)) => {
+            bog!("[CMD] pwm left={} right={}", motor_resp.left, motor_resp.right);
+        },
+        _ => {
+            panic!("[CMD execute] Unexpected RecvEnum");
         }
     }
 }

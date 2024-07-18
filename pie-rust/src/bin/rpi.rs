@@ -35,20 +35,6 @@ pub extern "C" fn _start() {
 
     let tid_timeout = ker_create(2, b"PROGRAM\0clock_server_helper\0").unwrap();
 
-    let pwm_state = [0, 1, 0, 1];
-    let a_state = [0, 1, 0, 0];
-    let b_state = [0, 0, 0, 1];
-
-    let pwm_pin = 18;
-    let in1_pin = 14;
-    let in2_pin = 15;
-
-    unsafe {
-        setup_gpio(pwm_pin, 0x01, 0x02); // PINOUT, PULLUP
-        setup_gpio(in1_pin, 0x01, 0x02); // PINOUT, PULLUP
-        setup_gpio(in2_pin, 0x01, 0x02); // PINOUT, PULLUP
-    }
-
     // loop {
     //     for i in 0..4 {
     //         // Wait 2 seconds

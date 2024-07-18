@@ -19,6 +19,7 @@ PROGRAMS+=gatt_monitor_relay
 PROGRAMS+=commander
 PROGRAMS+=imu_server
 PROGRAMS+=imu_collector
+PROGRAMS+=motor_server
 
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 
@@ -27,16 +28,16 @@ all: $(PROGRAMS_ELF)
 TARGET=aarch64-unknown-linux-gnu
 
 build/%_elf.o: bin/%
-	mkdir -p build/
-	aarch64-none-elf-objcopy -I binary -O elf64-littleaarch64 $(patsubst build/%_elf.o,bin/%,$@) $@
+	@mkdir -p build/
+	@aarch64-none-elf-objcopy -I binary -O elf64-littleaarch64 $(patsubst build/%_elf.o,bin/%,$@) $@
 
 bin/%: cargo
-	mkdir -p bin/ dump/
-	cp $(patsubst bin/%,target/$(TARGET)/release/%,$@) bin
-	aarch64-none-elf-strip -g $@
-	aarch64-none-elf-objdump -D $@ > $(patsubst bin/%,dump/%_objdump.txt,$@)
+	@mkdir -p bin/ dump/
+	@cp $(patsubst bin/%,target/$(TARGET)/release/%,$@) bin
+	@aarch64-none-elf-strip -g $@
+	@aarch64-none-elf-objdump -D $@ > $(patsubst bin/%,dump/%_objdump.txt,$@)
 	@aarch64-none-elf-objdump -d -j .text $@ | fgrep -q q0 && printf "\n***** WARNING: SIMD INSTRUCTIONS DETECTED! *****\n\n" || true
-	aarch64-none-elf-readelf -a $@ > $(patsubst bin/%,dump/%_readelf.txt,$@)
+	@aarch64-none-elf-readelf -a $@ > $(patsubst bin/%,dump/%_readelf.txt,$@)
 
 cargo: src/* Cargo.toml
 	cargo build -v --release -Z build-std=core,compiler_builtins

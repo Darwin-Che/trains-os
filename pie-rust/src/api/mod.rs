@@ -4,3 +4,4 @@ pub mod rpi_bluetooth;
 pub mod clock;
 pub mod gatt;
 pub mod imu;
+pub mod motor;

@@ -12,6 +12,7 @@ heapless = "0.8.0"
 fnv = { version = "1.0.7", default-features = false }
 volatile-register = "0.2.2"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
+libm = "0.2.8"
 
 [profile.dev]
 panic = "abort"

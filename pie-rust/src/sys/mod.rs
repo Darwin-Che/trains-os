@@ -8,3 +8,4 @@ pub mod log;
 pub mod bog;
 pub mod helper;
 pub mod gatt;
+pub mod libm;

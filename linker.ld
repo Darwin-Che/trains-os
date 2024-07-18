@@ -169,5 +169,11 @@ SECTIONS {
     pie-rust/build/imu_collector_elf.o (.*)
   }
 
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(motor_server_elf_start = .);
+  .motor_server_elf : {
+    pie-rust/build/motor_server_elf.o (.*)
+  }
+
   PROVIDE(LINKER_CODE_END = .);
 }
