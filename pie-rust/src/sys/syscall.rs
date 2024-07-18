@@ -98,11 +98,11 @@ pub fn ker_quadrature_encoder_init(pin_a: u32, pin_b: u32) -> Result<i32, i32> {
 #[repr(C)]
 #[derive(Debug)]
 pub struct KerQuadEncoderStat {
-    forward_cnt: u64,
-    backward_cnt: u64,
-    invalid_1_cnt: u64,
-    invalid_2_cnt: u64,
-    debug: u64,
+    pub forward_cnt: u64,
+    pub backward_cnt: u64,
+    pub invalid_1_cnt: u64,
+    pub invalid_2_cnt: u64,
+    pub debug: u64,
 }
 
 pub fn ker_quadrature_encoder_get(id: i32) -> KerQuadEncoderStat {

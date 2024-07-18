@@ -98,8 +98,8 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
 
-    let commander = ns_get("rpi_bluetooth_commander").unwrap();
-    let gatt = ns_get("rpi_bluetooth_gatt").unwrap();
+    let commander = ns_get_wait("rpi_bluetooth_commander");
+    let gatt = ns_get_wait("rpi_bluetooth_gatt");
 
     loop {
         let hci_packet_id = state.read_one_byte();
