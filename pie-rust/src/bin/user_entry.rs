@@ -16,11 +16,6 @@ fn panic(info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn _start() {
-    let msg1 = "RUST ENTRY TASK!!! Start\r\n";
-    let msg2 = "RUST ENTRY TASK!!! End\r\n";
-
-    rust_pie::sys::print_raw::ker_print_raw(msg1);
-
     let child_args = "PROGRAM\0clock_server\0".as_bytes();
     let child_tid = ker_create(PRIO_CLOCK, child_args).unwrap();
     // println!("child_tid = {child_tid}"); 
@@ -41,5 +36,5 @@ pub extern "C" fn _start() {
 
     ker_create(3, b"PROGRAM\0imu_server\0").unwrap();
 
-    rust_pie::sys::print_raw::ker_print_raw(msg2);
+    ker_create(3, b"PROGRAM\0motor_server\0").unwrap();
 }

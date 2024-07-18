@@ -1,4 +1,5 @@
 use volatile_register::{RW, RO};
+use crate::api::clock::*;
 
 type GpioSetting = u32;
 type GpioResistor = u32;
@@ -210,6 +211,118 @@ impl RpiClock {
         unsafe {
             self.CS.write(self.CS.read() | (0x01 << 1));
             self.C1.write(0);
+        }
+    }
+}
+
+#[repr(C)]
+pub struct RpiPwmReg {
+    pub CTL: RW<u32>,
+    pub STA: RW<u32>,
+    pub DMAC: RW<u64>,
+    pub RNG1: RW<u32>,
+    pub DAT1: RW<u32>,
+    pub FIF1: RW<u64>,
+    pub RNG2: RW<u32>,
+    pub DAT2: RW<u32>,
+}
+
+#[derive(Default)]
+struct RpiPwmConfig {
+    pub pin: u32,
+    pub setting: u32,
+    pub id: u32, // 0 or 1
+    pub channel: u32, // 0 or 1
+}
+
+static RPI_PWM_CONFIG: &'static [RpiPwmConfig] = &[
+    RpiPwmConfig{pin: 12, setting: GPIO_SETTING_ALTFN0, id: 0, channel: 0},
+    RpiPwmConfig{pin: 13, setting: GPIO_SETTING_ALTFN0, id: 0, channel: 1},
+    RpiPwmConfig{pin: 18, setting: GPIO_SETTING_ALTFN5, id: 0, channel: 0},
+    RpiPwmConfig{pin: 19, setting: GPIO_SETTING_ALTFN5, id: 0, channel: 1},
+];
+
+pub struct RpiPwm {
+    pub id: u32,
+    pub channel: u32,
+    pub reg: &'static mut RpiPwmReg,
+}
+
+pub struct RpiGpClock {
+    pub ctl: RW<u32>,
+    pub div: RW<u32>,
+}
+
+const CLOCK_PASSWORD: u32 = 0x5A000000;
+const CLOCK_CTL_ENAB: u32 = 1 << 4;
+const CLOCK_CTL_KILL: u32 = 1 << 5;
+const CLOCK_CTL_BUSY: u32 = 1 << 7;
+
+const CLOCK_SRC_OSCI: u32 = 1 << 0;
+
+impl RpiPwm {
+    pub fn global_setup() {
+        unsafe {
+            let clock = &mut *(0xFE1010A0 as *mut RpiGpClock);
+            clock.ctl.write(CLOCK_PASSWORD | CLOCK_CTL_KILL);
+            while clock.ctl.read() & CLOCK_CTL_BUSY != 0 {
+                wait_ticks(1);
+            }
+            clock.div.write(CLOCK_PASSWORD | (1 << 12));
+            clock.ctl.write(CLOCK_PASSWORD | CLOCK_CTL_ENAB | CLOCK_SRC_OSCI);
+            while clock.ctl.read() & CLOCK_CTL_BUSY == 0 {
+                wait_ticks(1);
+            }
+
+            let reg = &mut *(0xFE20C000 as *mut RpiPwmReg);
+            reg.CTL.write((0x01 << 0) | (0x01 << 8));
+        }
+    }
+
+    pub fn new(pin: u32, M: u32) -> Self {
+        let mut config_find = None;
+        for c in RPI_PWM_CONFIG {
+            if c.pin == pin {
+                config_find = Some(c);
+            }
+        }
+
+        let config = config_find.unwrap();
+
+        unsafe {
+            setup_gpio(config.pin, config.setting, GPIO_RESISTOR_NONE);
+        }
+
+        let mut s = Self {
+            id: config.id,
+            channel: config.channel,
+            reg: unsafe {
+                &mut *(0xFE20C000 as *mut RpiPwmReg)
+            },
+        };
+
+        if s.channel == 0 {
+            unsafe {
+                s.reg.RNG1.write(M);
+            }
+        } else if s.channel == 1 {
+            unsafe {
+                s.reg.RNG2.write(M);
+            }
+        }
+
+        s
+    }
+
+    pub fn set(&mut self, N: u32) {
+        if self.channel == 0 {
+            unsafe {
+                self.reg.DAT1.write(N);
+            }
+        } else if self.channel == 1 {
+            unsafe {
+                self.reg.DAT2.write(N);
+            }
         }
     }
 }
