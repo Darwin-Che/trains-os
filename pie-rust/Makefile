@@ -14,12 +14,16 @@ PROGRAMS+=clock_server
 PROGRAMS+=clock_server_helper
 PROGRAMS+=clock_notifier
 PROGRAMS+=encoder_server
+PROGRAMS+=encoder_reporter
+PROGRAMS+=encoder_collector
 PROGRAMS+=gatt_monitor
 PROGRAMS+=gatt_monitor_relay
 PROGRAMS+=commander
 PROGRAMS+=imu_server
 PROGRAMS+=imu_collector
 PROGRAMS+=motor_server
+PROGRAMS+=pid
+PROGRAMS+=pid_trigger
 
 PROGRAMS_ELF=$(patsubst %,build/%_elf.o,$(PROGRAMS))
 

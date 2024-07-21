@@ -12,10 +12,15 @@ macro_rules! log_helper {
     ($($arg:tt)*) => ($crate::sys::log::_log(format_args!($($arg)*)););
 }
 
+// #[macro_export]
+// macro_rules! log {
+//     () => ($crate::log_helper!("\r\n"));
+//     ($($arg:tt)*) => ($crate::log_helper!("{}\r\n", format_args!($($arg)*)));
+// }
+
 #[macro_export]
 macro_rules! log {
-    () => ($crate::log_helper!("\r\n"));
-    ($($arg:tt)*) => ($crate::log_helper!("{}\r\n", format_args!($($arg)*)));
+    ($($arg:tt)*) => ();
 }
 
 #[macro_export]
@@ -23,10 +28,15 @@ macro_rules! log_helper_blocking {
     ($($arg:tt)*) => ($crate::sys::log::_log_blocking(format_args!($($arg)*)););
 }
 
+// #[macro_export]
+// macro_rules! logblk {
+//     () => ($crate::log_helper_blocking!("\r\n"));
+//     ($($arg:tt)*) => ($crate::log_helper_blocking!("{}\r\n", format_args!($($arg)*)));
+// }
+
 #[macro_export]
 macro_rules! logblk {
-    () => ($crate::log_helper_blocking!("\r\n"));
-    ($($arg:tt)*) => ($crate::log_helper_blocking!("{}\r\n", format_args!($($arg)*)));
+    ($($arg:tt)*) => ();
 }
 
 pub struct Logger {

@@ -4,6 +4,8 @@ pub use crate::sys::types::*;
 
 use core::cell::SyncUnsafeCell;
 
+pub const TICK_MS: u64 = 10;
+
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
 pub struct ClockNotifier {

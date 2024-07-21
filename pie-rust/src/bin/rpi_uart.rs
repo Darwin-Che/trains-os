@@ -230,7 +230,9 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
                 state.read();
                 state.write();
             },
-            None => println!("Rpi Uart Rx : Received None !"),
+            None => {
+                println!("Rpi Uart Rx : Received None !");
+            },
         };
     }
 }

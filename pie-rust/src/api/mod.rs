@@ -5,3 +5,5 @@ pub mod clock;
 pub mod gatt;
 pub mod imu;
 pub mod motor;
+pub mod pid;
+pub mod encoder;

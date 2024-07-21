@@ -140,6 +140,18 @@ SECTIONS {
   }
 
   . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(encoder_reporter_elf_start = .);
+  .encoder_reporter_elf : {
+    pie-rust/build/encoder_reporter_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(encoder_collector_elf_start = .);
+  .encoder_collector_elf : {
+    pie-rust/build/encoder_collector_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
   PROVIDE(gatt_monitor_elf_start = .);
   .gatt_monitor_elf : {
     pie-rust/build/gatt_monitor_elf.o (.*)
@@ -173,6 +185,18 @@ SECTIONS {
   PROVIDE(motor_server_elf_start = .);
   .motor_server_elf : {
     pie-rust/build/motor_server_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(pid_elf_start = .);
+  .pid_elf : {
+    pie-rust/build/pid_elf.o (.*)
+  }
+
+  . = ALIGN(0x10000); /* 2^16 = 64KB */
+  PROVIDE(pid_trigger_elf_start = .);
+  .pid_trigger_elf : {
+    pie-rust/build/pid_trigger_elf.o (.*)
   }
 
   PROVIDE(LINKER_CODE_END = .);

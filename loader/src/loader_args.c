@@ -17,12 +17,16 @@ extern char clock_server_elf_start[];
 extern char clock_server_helper_elf_start[];
 extern char clock_notifier_elf_start[];
 extern char encoder_server_elf_start[];
+extern char encoder_collector_elf_start[];
+extern char encoder_reporter_elf_start[];
 extern char gatt_monitor_elf_start[];
 extern char gatt_monitor_relay_elf_start[];
 extern char commander_elf_start[];
 extern char imu_server_elf_start[];
 extern char imu_collector_elf_start[];
 extern char motor_server_elf_start[];
+extern char pid_elf_start[];
+extern char pid_trigger_elf_start[];
 
 static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "user_entry")) {
@@ -70,6 +74,12 @@ static const char * resolve_elf_start(const char * program_name) {
   if (util_strcmp(program_name, "encoder_server")) {
     return encoder_server_elf_start;
   }
+  if (util_strcmp(program_name, "encoder_reporter")) {
+    return encoder_reporter_elf_start;
+  }
+  if (util_strcmp(program_name, "encoder_collector")) {
+    return encoder_collector_elf_start;
+  }
   if (util_strcmp(program_name, "gatt_monitor")) {
     return gatt_monitor_elf_start;
   }
@@ -87,6 +97,12 @@ static const char * resolve_elf_start(const char * program_name) {
   }
   if (util_strcmp(program_name, "motor_server")) {
     return motor_server_elf_start;
+  }
+  if (util_strcmp(program_name, "pid")) {
+    return pid_elf_start;
+  }
+  if (util_strcmp(program_name, "pid_trigger")) {
+    return pid_trigger_elf_start;
   }
   return NULL;
 }

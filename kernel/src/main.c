@@ -40,9 +40,12 @@ int k_main()
   uart_getc(2);
 #endif
 
+#ifdef DEBUG
   printf("This is trains-os (" __TIME__ ")\r\n");
   uart_getc(2);
+#endif
 
+#ifdef DEBUG
   printf("Enable MMU? y/n\r\n");
   char c = uart_getc(2);
   if (c == 'y')
@@ -56,9 +59,12 @@ int k_main()
   }
 
   pgmgr_debug_print(SYSADDR.pgmgr, false);
+#else
+  turn_on_mmu();
+#endif
 
   // setup idle_task : tid = 0
-  printf("Kernel Start - creating idle task\r\n");
+  // printf("Kernel Start - creating idle task\r\n");
   struct kTaskDsp *idle_td = k_tmgr_get_free_task(&gs.task_mgr, PG_SFT);
   if (idle_td == NULL)
   {
@@ -75,7 +81,7 @@ int k_main()
     printf("Failed to create user_entry_td\r\n");
     return 0;
   }
-  printf("Kernel Start - creating user_entry - tid = %lld\r\n", user_entry_td->tid);
+  // printf("Kernel Start - creating user_entry - tid = %lld\r\n", user_entry_td->tid);
   const char user_entry_task_args[] = "PROGRAM\0user_entry";
   k_td_init_user_task(user_entry_td, NULL, K_SCHED_PRIO_MAX, load_elf, user_entry_task_args, sizeof(user_entry_task_args)); // init other fields
   k_sched_add_ready(&gs.scheduler, user_entry_td);
@@ -87,7 +93,7 @@ int k_main()
     printf("Failed to create name_server\r\n");
     return 0;
   }
-  printf("Kernel Start - creating name_server - tid = %lld\r\n", name_server_td->tid);
+  // printf("Kernel Start - creating name_server - tid = %lld\r\n", name_server_td->tid);
   const char name_server_task_args[] = "PROGRAM\0name_server";
   k_td_init_user_task(name_server_td, NULL, K_SCHED_PRIO_MAX, load_elf, name_server_task_args, sizeof(name_server_task_args)); // init other fields
   k_sched_add_ready(&gs.scheduler, name_server_td);
