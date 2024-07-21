@@ -57,7 +57,9 @@ pub extern "C" fn _start() {
                     }
                 }
             },
-            None => log!("[IMU Collector] Received None (outer)!"),
+            None => {
+                log!("[IMU Collector] Received None (outer)!");
+            },
         };
 
         if let Some(x) = offset {
@@ -69,7 +71,7 @@ pub extern "C" fn _start() {
             }
             ker_send(uart_tid, &send_box_uart, &mut recv_box).unwrap();
         } else {
-            log!("[IMU Collector] Failed to find offset!")
+            log!("[IMU Collector] Failed to find offset!");
         }
 
         // Now we are aligned with the boundary of the messages

@@ -8,6 +8,9 @@ use rust_pie::sys::rpi::*;
 use rust_pie::log;
 use rust_pie::api::name_server::*;
 use rust_pie::api::gatt::*;
+use rust_pie::api::encoder::*;
+
+use heapless::LinearMap;
 
 const DEBUG: bool = false;
 
@@ -21,52 +24,49 @@ fn panic(info: &PanicInfo) -> ! {
 
 const ENCODER_INTERVAL: u64 = 1;
 
+#[derive(Debug, RecvEnumTrait)]
+#[allow(dead_code)]
+enum RecvEnum<'a> {
+    EncoderReq(&'a mut EncoderReq),
+    EncoderResp(&'a mut EncoderResp),
+}
+
 #[no_mangle]
 pub extern "C" fn _start() {
+    ns_set("encoder_server").unwrap();
+
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
 
-    let gatt_server_tid = ns_get_wait("rpi_bluetooth_gatt");
+    ker_create(PRIO_ENCODER, b"PROGRAM\0encoder_collector\0").unwrap();
 
-    log!("Start Encoder VCC at pin 25");
-    // start the encoder voltage pin25
-    unsafe {
-        setup_gpio(25, 0x01, 0x02); // Pullup output
-        set_outpin_gpio(25);
-    }
-
-    wait_ticks(300);
-
-    log!("ker_quadrature_encoder_init");
-    // register the encoder
-    let encoder = ker_quadrature_encoder_init(23, 24).unwrap();
-
-    log!("[Encoder] encoder = {}", encoder);
-
-    let mut cnt = 0;
-    let mut acc: f64 = 0.0;
+    let mut registry : LinearMap<Tid, EncoderResp, 8> = LinearMap::new();
 
     loop {
-        let val = ker_quadrature_encoder_get(encoder);
+        let sender_tid = ker_recv(&mut recv_box);
 
-        cnt += 1;
-        acc += val.forward_cnt as f64 - val.backward_cnt as f64;
-        if cnt == 10 {
-            // log!("[Encoder] ker_quadrature_encoder_get {} {:?}", acc, val);
-            let mut encoder_update = SendCtx::<GattServerPublishReq>::new(&mut send_box).unwrap();
-            encoder_update.name = encoder_update.attach_array(b"Encoder".len()).unwrap();
-            encoder_update.name.copy_from_slice(b"Encoder");
-            encoder_update.bytes = encoder_update.attach_array(24).unwrap();
-            encoder_update.bytes[0..8].copy_from_slice(&get_cur_tick().to_le_bytes());
-            encoder_update.bytes[8..16].copy_from_slice(&(acc * 10.0 / 64.0 / 78.0).to_le_bytes());
-            encoder_update.bytes[16..24].copy_from_slice(&0f64.to_le_bytes());
-
-            ker_send(gatt_server_tid, &send_box, &mut recv_box).unwrap();
-
-            cnt = 0;
-            acc = 0.0;
+        match RecvEnum::from_recv_bytes(&mut recv_box) {
+            Some(RecvEnum::EncoderReq(_)) => {
+                let mut reply = SendCtx::<EncoderResp>::new(&mut send_box).unwrap();
+                if let Some(v) = registry.get_mut(&sender_tid) {
+                    **reply = *v;
+                    v.left = 0.0;
+                    v.right = 0.0;
+                } else {
+                    registry.insert(sender_tid, EncoderResp{ left: 0.0, right: 0.0 }).unwrap();
+                }
+                ker_reply(sender_tid, &send_box).unwrap();
+            },
+            Some(RecvEnum::EncoderResp(resp)) => {
+                SendCtx::<EncoderReq>::new(&mut send_box).unwrap();
+                ker_reply(sender_tid, &send_box).unwrap();
+                for (_, val) in registry.iter_mut() {
+                    val.add(resp);
+                }
+            },
+            _ => {
+                log!("[ENCODER] Unexpected Receive");
+            }
         }
-
-        wait_ticks(ENCODER_INTERVAL); // Every 0.5 sec
     }
 }

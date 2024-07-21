@@ -21,10 +21,15 @@ macro_rules! print {
     ($($arg:tt)*) => ($crate::sys::print_raw::_print(format_args!($($arg)*)));
 }
 
+// #[macro_export]
+// macro_rules! println {
+//     () => ($crate::print!("\r\n"));
+//     ($($arg:tt)*) => ($crate::print!("{}\r\n", format_args!($($arg)*)));
+// }
+
 #[macro_export]
 macro_rules! println {
-    () => ($crate::print!("\r\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\r\n", format_args!($($arg)*)));
+    ($($arg:tt)*) => ();
 }
 
 pub struct KerPrintRaw;
