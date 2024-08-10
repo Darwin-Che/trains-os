@@ -80,12 +80,6 @@ SECTIONS {
   }
 
   . = ALIGN(0x10000); /* 2^16 = 64KB */
-  PROVIDE(rpi_elf_start = .);
-  .rpi_elf : {
-    pie-rust/build/rpi_elf.o (.*)
-  }
-
-  . = ALIGN(0x10000); /* 2^16 = 64KB */
   PROVIDE(rpi_uart_elf_start = .);
   .rpi_uart_elf : {
     pie-rust/build/rpi_uart_elf.o (.*)

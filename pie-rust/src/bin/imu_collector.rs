@@ -27,9 +27,14 @@ enum RecvEnum<'a> {
 pub extern "C" fn _start() {
     let ps0 = 10;
     let ps1 = 11;
+    let vin = 25;
     unsafe {
-        setup_gpio(ps0, GPIO_SETTING_OUTPUT, GPIO_RESISTOR_PUP);
+        setup_gpio(ps0, GPIO_SETTING_OUTPUT, GPIO_RESISTOR_PDP);
+        set_outpin_gpio(ps0);
         setup_gpio(ps1, GPIO_SETTING_OUTPUT, GPIO_RESISTOR_PDP);
+
+        setup_gpio(vin, GPIO_SETTING_OUTPUT, GPIO_RESISTOR_PDP);
+        set_outpin_gpio(vin);
     }
 
     let parent_tid = ker_parent_tid();

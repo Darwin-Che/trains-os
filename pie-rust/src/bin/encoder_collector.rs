@@ -28,32 +28,33 @@ pub extern "C" fn _start() {
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
 
-    log!("Start Encoder VCC at pin 25");
-    // start the encoder voltage pin25
+    log!("Start Encoder VCC at pin 12 and 17");
+    // start the encoder voltage pin12
     unsafe {
-        setup_gpio(25, 0x01, 0x02); // Pullup output
-        set_outpin_gpio(25);
+        setup_gpio(12, GPIO_SETTING_OUTPUT, GPIO_RESISTOR_PDP); // Pullup output
+        setup_gpio(17, GPIO_SETTING_OUTPUT, GPIO_RESISTOR_PDP); // Pullup output
+        set_outpin_gpio(12);
+        set_outpin_gpio(17);
     }
 
     wait_ticks(300);
 
     log!("ker_quadrature_encoder_init");
     // register the encoder
-    let encoder = ker_quadrature_encoder_init(23, 24).unwrap();
+    let encoder_left = ker_quadrature_encoder_init(16, 20).unwrap();
+    let encoder_right = ker_quadrature_encoder_init(27, 22).unwrap();
 
-    log!("[Encoder] encoder = {}", encoder);
-
-    let mut cnt = 0;
-    let mut acc: f64 = 0.0;
+    log!("[Encoder] encoder = ({}, {})", encoder_left, encoder_right);
 
     loop {
         wait_ticks(1);
 
-        let val = ker_quadrature_encoder_get(encoder);
+        let val_left = ker_quadrature_encoder_get(encoder_left);
+        let val_right = ker_quadrature_encoder_get(encoder_right);
 
         let mut encoder_update = SendCtx::<EncoderResp>::new(&mut send_box).unwrap();
-        encoder_update.left = (val.forward_cnt as f64 - val.backward_cnt as f64) / ENCODER_RATIO;
-        encoder_update.right = 0.0;
+        encoder_update.left = (val_left.forward_cnt as f64 - val_left.backward_cnt as f64) / ENCODER_RATIO;
+        encoder_update.right = (val_right.forward_cnt as f64 - val_right.backward_cnt as f64) / ENCODER_RATIO;
 
         ker_send(parent_tid, &send_box, &mut recv_box).unwrap();
     }

@@ -81,8 +81,8 @@ struct State {
 impl State {
     pub fn new() -> Self {
         Self {
-            left: Motor::new(18, 14, 15),
-            right: Motor::new(13, 19, 26),
+            left: Motor::new(13, 26, 19),
+            right: Motor::new(18, 14, 15),
         }
     }
 }
@@ -103,6 +103,12 @@ pub extern "C" fn _start() {
 
     let mut state = State::new();
 
+    // Setup Power for the Motor Board
+    unsafe {
+        setup_gpio(21, GPIO_SETTING_OUTPUT, GPIO_RESISTOR_PDP);
+        set_outpin_gpio(21);
+    }
+
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
 
@@ -115,7 +121,7 @@ pub extern "C" fn _start() {
                     state.left.update(v);
                 }
                 if let Some(v) = motor_req.right {
-                    state.right.update(v);
+                    state.right.update(-v);
                 }
 
                 let mut motor_resp = SendCtx::<MotorResp>::new(&mut send_box).unwrap();

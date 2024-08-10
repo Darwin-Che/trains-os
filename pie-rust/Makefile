@@ -4,7 +4,6 @@ PROGRAMS+=msg_demo
 PROGRAMS+=msg_demo_child
 PROGRAMS+=name_server
 PROGRAMS+=name_server_demo
-PROGRAMS+=rpi
 PROGRAMS+=rpi_uart
 PROGRAMS+=rpi_uart_intr_broker
 PROGRAMS+=rpi_bluetooth_commander
