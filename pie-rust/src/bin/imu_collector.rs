@@ -7,7 +7,7 @@ use rust_pie::sys::syscall::*;
 use rust_pie::sys::rpi::*;
 use rust_pie::api::imu::*;
 use rust_pie::api::rpi_uart::*;
-use rust_pie::sys::helper::read_u16;
+use rust_pie::sys::helper::read_i16;
 
 /// This function is called on panic.
 #[panic_handler]
@@ -93,12 +93,12 @@ pub extern "C" fn _start() {
                     if resp.bytes[0] != 0xAA || resp.bytes[1] != 0xAA {
                         continue 'outer;
                     }
-                    imu_raw.yaw = read_u16(&resp.bytes[3..]);
-                    imu_raw.pitch = read_u16(&resp.bytes[5..]);
-                    imu_raw.roll = read_u16(&resp.bytes[7..]);
-                    imu_raw.x_accel = read_u16(&resp.bytes[9..]);
-                    imu_raw.y_accel = read_u16(&resp.bytes[11..]);
-                    imu_raw.z_accel = read_u16(&resp.bytes[13..]);
+                    imu_raw.yaw = read_i16(&resp.bytes[3..]);
+                    imu_raw.pitch = read_i16(&resp.bytes[5..]);
+                    imu_raw.roll = read_i16(&resp.bytes[7..]);
+                    imu_raw.x_accel = read_i16(&resp.bytes[9..]);
+                    imu_raw.y_accel = read_i16(&resp.bytes[11..]);
+                    imu_raw.z_accel = read_i16(&resp.bytes[13..]);
                     ker_send(parent_tid, &send_box_imu, &mut recv_box).unwrap();
                 },
                 None => panic!("[IMU Collector] Received None (inner)!"),

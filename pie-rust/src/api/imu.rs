@@ -11,12 +11,12 @@ pub struct ImuReq {
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default, MsgTrait)]
 pub struct ImuResp {
-    pub yaw: u16,
-    pub pitch: u16,
-    pub roll: u16,
-    pub x_accel: u16,
-    pub y_accel: u16,
-    pub z_accel: u16,
+    pub yaw: i16,
+    pub pitch: i16,
+    pub roll: i16,
+    pub x_accel: i16,
+    pub y_accel: i16,
+    pub z_accel: i16,
 }
 
 #[repr(C)]
@@ -27,12 +27,12 @@ pub struct ImuRawReq {
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
 pub struct ImuRawResp {
-    pub yaw: u16,
-    pub pitch: u16,
-    pub roll: u16,
-    pub x_accel: u16,
-    pub y_accel: u16,
-    pub z_accel: u16,
+    pub yaw: i16,
+    pub pitch: i16,
+    pub roll: i16,
+    pub x_accel: i16,
+    pub y_accel: i16,
+    pub z_accel: i16,
 }
 
 impl ImuResp {

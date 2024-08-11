@@ -22,3 +22,7 @@ pub fn read_u16(bytes: &[u8]) -> u16 {
         return (bytes[1] as u16) << 8 | (bytes[0] as u16);
     }
 }
+
+pub fn read_i16(bytes: &[u8]) -> i16 {
+    return read_u16(bytes) as i16;
+}

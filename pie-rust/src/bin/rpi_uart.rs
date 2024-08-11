@@ -211,7 +211,7 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
 
     let mut state = State::new(uart_id, 115200, flow_control);
 
-    wait_ticks(50);
+    wait_ms(500);
 
     let mut recv_box: RecvBox = RecvBox::default();
     

@@ -266,12 +266,12 @@ impl RpiPwm {
             let clock = &mut *(0xFE1010A0 as *mut RpiGpClock);
             clock.ctl.write(CLOCK_PASSWORD | CLOCK_CTL_KILL);
             while clock.ctl.read() & CLOCK_CTL_BUSY != 0 {
-                wait_ticks(1);
+                wait_ms(1);
             }
             clock.div.write(CLOCK_PASSWORD | (1 << 12));
             clock.ctl.write(CLOCK_PASSWORD | CLOCK_CTL_ENAB | CLOCK_SRC_OSCI);
             while clock.ctl.read() & CLOCK_CTL_BUSY == 0 {
-                wait_ticks(1);
+                wait_ms(1);
             }
 
             let reg = &mut *(0xFE20C000 as *mut RpiPwmReg);

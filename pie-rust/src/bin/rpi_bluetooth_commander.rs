@@ -240,7 +240,7 @@ pub extern "C" fn _start(ptr: *const c_char, len: usize) {
     log!("[BT_CMD] Load Firmware finished");
 
     // Let's Wait 2 second
-    wait_ticks(200);
+    wait_ms(2000);
 
     // SET BAUDRATE
     commander.set_baud();

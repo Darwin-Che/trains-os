@@ -65,8 +65,7 @@ fn ns_get_loop(name: &str, cnt: i32) -> Option<Tid> {
 
         println!("Waiting for NsGet {name}");
 
-        // wait ticks
-        wait_ticks(10);
+        wait_ms(100);
     }
 }
 

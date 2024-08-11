@@ -27,7 +27,7 @@ pub extern "C" fn _start() {
 
     ker_create(PRIO_ENCODER, b"PROGRAM\0encoder_server\0").unwrap();
 
-    wait_ticks(300);
+    wait_ms(3000);
 
     ker_create(3, b"PROGRAM\0imu_server\0").unwrap();
 

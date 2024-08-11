@@ -7,6 +7,7 @@ use rust_pie::api::clock::*;
 use rust_pie::api::name_server::*;
 use rust_pie::api::imu::*;
 use rust_pie::api::motor::*;
+use rust_pie::api::pid::*;
 use rust_pie::log;
 use rust_pie::bog;
 use rust_pie::sys::syscall::*;
@@ -30,6 +31,7 @@ enum RecvEnum<'a> {
     GattMonitorResp(&'a mut GattMonitorResp<'a>),
     ImuResp(&'a mut ImuResp),
     MotorResp(&'a mut MotorResp),
+    PidTuneResp(&'a mut PidTuneResp),
 }
 
 const NAME_CMD_ACK: &[u8] = b"Cmd Ack";
@@ -83,6 +85,12 @@ pub extern "C" fn _start() {
                         .parse::<f64>().unwrap();
 
                     cmd_execute_pwm(velo);
+                } else if cmd.starts_with("pid") {
+                    cmd_execute_pid(
+                        cmd
+                        .strip_prefix("pid").unwrap()
+                        .trim()
+                    );
                 }
 
             },
@@ -125,6 +133,33 @@ fn cmd_execute_pwm(velo: f64) {
         },
         _ => {
             panic!("[CMD execute] Unexpected RecvEnum");
+        }
+    }
+}
+
+fn cmd_execute_pid(cmd: &str) {
+    let mut args = cmd.split(' ');
+    let key = args.next().unwrap();
+    let val = args.next().unwrap().parse::<f64>().unwrap();
+
+    let mut send_box: SendBox = SendBox::default();
+    let mut recv_box: RecvBox = RecvBox::default();
+
+    let pid_tid = ns_get("pid").unwrap();
+    let mut pid_tune = SendCtx::<PidTuneReq>::new(&mut send_box).unwrap();
+    pid_tune.key = pid_tune.attach_array(key.len()).unwrap();
+    pid_tune.key.copy_from_slice(key.as_bytes());
+    pid_tune.val = val;
+
+    ker_send(pid_tid, &send_box, &mut recv_box).unwrap();
+    match RecvEnum::from_recv_bytes(&mut recv_box) {
+        Some(RecvEnum::PidTuneResp(tune_resp)) => {
+            bog!("[CMD] pid pitch_p={} pitch_d={} speed_p={} speed_i={}",
+                tune_resp.pid_pitch_p, tune_resp.pid_pitch_d,
+                tune_resp.pid_speed_p, tune_resp.pid_speed_i);
+        },
+        _ => {
+            panic!("[CMD execute PID] Unexpected RecvEnum");
         }
     }
 }

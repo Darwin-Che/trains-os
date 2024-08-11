@@ -4,7 +4,7 @@ pub use crate::sys::types::*;
 
 use core::cell::SyncUnsafeCell;
 
-pub const TICK_MS: u64 = 10;
+pub const TICK_MS: u64 = 1;
 
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
@@ -107,4 +107,8 @@ pub fn wait_ticks(ticks: u64) {
         *clock_api = Some(ClockAPI::new());
     }
     clock_api.as_mut().unwrap().wait_ticks(ticks)
+}
+
+pub fn wait_ms(ms: u64) {
+    wait_ticks((ms + TICK_MS - 1) / TICK_MS);
 }

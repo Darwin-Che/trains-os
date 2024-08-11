@@ -20,7 +20,7 @@ fn panic(info: &PanicInfo) -> ! {
     loop {}
 }
 
-const ENCODER_INTERVAL: u64 = 500 / TICK_MS; // Every 0.5 sec
+const ENCODER_INTERVAL: u64 = 500; // Every 0.5 sec
 
 #[derive(Debug, RecvEnumTrait)]
 #[allow(dead_code)]
@@ -52,6 +52,6 @@ pub extern "C" fn _start() {
             ker_send(gatt_server_tid, &send_box, &mut recv_box).unwrap();
         }
 
-        wait_ticks(ENCODER_INTERVAL);
+        wait_ms(ENCODER_INTERVAL);
     }
 }

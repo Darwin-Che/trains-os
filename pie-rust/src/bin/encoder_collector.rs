@@ -37,7 +37,7 @@ pub extern "C" fn _start() {
         set_outpin_gpio(17);
     }
 
-    wait_ticks(300);
+    wait_ms(1000);
 
     log!("ker_quadrature_encoder_init");
     // register the encoder

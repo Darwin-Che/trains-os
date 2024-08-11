@@ -42,6 +42,6 @@ pub extern "C" fn _start() {
         SendCtx::<PidTrigger>::new(&mut send_box).unwrap();
         ker_send(parent_tid, &send_box, &mut recv_box).unwrap();
 
-        wait_ticks(PID_DT_TICK);
+        wait_ms(PID_DT_MS);
     }
 }

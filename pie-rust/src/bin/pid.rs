@@ -108,12 +108,16 @@ impl PidSpeed {
 enum RecvEnum<'a> {
     ImuResp(&'a mut ImuResp),
     EncoderResp(&'a mut EncoderResp),
+    PidTuneReq(&'a mut PidTuneReq<'a>),
 }
 
 #[no_mangle]
 pub extern "C" fn _start() {
+    ns_set("pid").unwrap();
+
     let imu_server_tid = ns_get_wait("imu_server");
     let encoder_server_tid = ns_get_wait("encoder_server");
+    let motor_server_pid = ns_get_wait("motor_server");
 
     let pid_trigger_tid = ker_create(PRIO_PID, b"PROGRAM\0pid_trigger\0").unwrap();
 
@@ -135,10 +139,10 @@ pub extern "C" fn _start() {
             if let RecvEnum::ImuResp(imu_resp) = RecvEnum::from_recv_bytes(&mut recv_box).unwrap() {
                 let new_pitch = (imu_resp.pitch as f64) * 0.01;
                 let old_pitch = pid_pitch.s_pitch;
-                pid_pitch.s_pitch_vel = (new_pitch - old_pitch) / PID_DT;
+                pid_pitch.s_pitch_vel = (new_pitch - old_pitch) / PID_DT_S;
                 pid_pitch.s_pitch = new_pitch;
             } else {
-                log!("[PID] Unexpected Response from imu_server");
+                bog!("[PID] Unexpected Response from imu_server");
             }
 
             pid_pitch.calc();
@@ -146,17 +150,46 @@ pub extern "C" fn _start() {
             SendCtx::<EncoderReq>::new(&mut send_box).unwrap();
             ker_send(encoder_server_tid, &send_box, &mut recv_box).unwrap();
             if let RecvEnum::EncoderResp(encoder_resp) = RecvEnum::from_recv_bytes(&mut recv_box).unwrap() {
-                pid_speed.s_encoder_left = encoder_resp.left / PID_DT;
-                pid_speed.s_encoder_right = encoder_resp.right / PID_DT;
+                pid_speed.s_encoder_left = encoder_resp.left / PID_DT_S;
+                pid_speed.s_encoder_right = encoder_resp.right / PID_DT_S;
             } else {
-                log!("[PID] Unexpected Response from encoder_server");
+                bog!("[PID] Unexpected Response from encoder_server");
             }
 
             pid_speed.calc();
 
-            // log!("[PID] output {} {}", pid_pitch.s_pitch, pid_speed.s_speed);
+            // bog!("[PID] output {} {}", pid_pitch.s_pitch, pid_speed.s_speed);
+            let mut motor_req = SendCtx::<MotorReq>::new(&mut send_box).unwrap();
+            motor_req.left = Some(pid_pitch.o_pitch + pid_speed.o_speed);
+            motor_req.right = Some(pid_pitch.o_pitch + pid_speed.o_speed);
+            ker_send(motor_server_pid, &send_box, &mut recv_box).unwrap();
 
             continue;
+        }
+
+        match RecvEnum::from_recv_bytes(&mut recv_box) {
+            Some(RecvEnum::PidTuneReq(tune)) => {
+                let key = str::from_utf8(&tune.key).unwrap();
+                match key {
+                    "pitch_p" => {
+                        pid_pitch.pid_pitch_p = tune.val;
+                    },
+                    "pitch_d" => {
+                        pid_pitch.pid_pitch_d = tune.val;
+                    },
+                    _ => (),
+                };
+                
+                let mut tune_resp = SendCtx::<PidTuneResp>::new(&mut send_box).unwrap();
+                tune_resp.pid_pitch_p = pid_pitch.pid_pitch_p;
+                tune_resp.pid_pitch_d = pid_pitch.pid_pitch_d;
+                tune_resp.pid_speed_p = pid_speed.pid_speed_p;
+                tune_resp.pid_speed_i = pid_speed.pid_speed_i;
+                ker_reply(sender_tid, &send_box).unwrap();
+            },
+            _ => {
+                bog!("PID : Received None !");
+            },
         }
     }
 }
