@@ -45,14 +45,6 @@ struct PidPitch {
 }
 
 impl PidPitch {
-    pub fn new(pid_pitch_p: f64, pid_pitch_d: f64) -> Self {
-        Self {
-            pid_pitch_p,
-            pid_pitch_d,
-            ..Self::default()
-        }
-    }
-
     pub fn calc(&mut self) {
         self.o_pitch =
             (self.t_pitch - self.s_pitch) * self.pid_pitch_p
@@ -81,14 +73,6 @@ struct PidSpeed {
 }
 
 impl PidSpeed {
-    pub fn new(pid_speed_p: f64, pid_speed_i: f64) -> Self {
-        Self {
-            pid_speed_p,
-            pid_speed_i,
-            ..Self::default()
-        }
-    }
-
     pub fn calc(&mut self) {
         let encoder = (self.s_encoder_left + self.s_encoder_right) * 0.5;
 
@@ -109,6 +93,7 @@ enum RecvEnum<'a> {
     ImuResp(&'a mut ImuResp),
     EncoderResp(&'a mut EncoderResp),
     PidTuneReq(&'a mut PidTuneReq<'a>),
+    PidEnable(&'a mut PidEnable),
 }
 
 #[no_mangle]
@@ -124,8 +109,20 @@ pub extern "C" fn _start() {
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
 
-    let mut pid_pitch = PidPitch::new(0.0, 0.0);
-    let mut pid_speed = PidSpeed::new(0.0, 0.0);
+    let mut pid_pitch = PidPitch {
+        pid_pitch_p: 6.0,
+        pid_pitch_d: 0.02,
+        t_pitch: -5.0,
+        ..PidPitch::default()
+    };
+    let mut pid_speed = PidSpeed{
+        pid_speed_i: 0.0,
+        pid_speed_p: 0.0,
+        t_speed: 0.0,
+        ..PidSpeed::default()
+    };
+
+    let mut pid_enabled = false;
 
     loop {
         let sender_tid = ker_recv(&mut recv_box);
@@ -133,6 +130,10 @@ pub extern "C" fn _start() {
         if sender_tid == pid_trigger_tid {
             SendCtx::<PidTrigger>::new(&mut send_box).unwrap();
             ker_reply(sender_tid, &send_box).unwrap();
+
+            if !pid_enabled {
+                continue;
+            }
 
             SendCtx::<ImuReq>::new(&mut send_box).unwrap();
             ker_send(imu_server_tid, &send_box, &mut recv_box).unwrap();
@@ -168,6 +169,16 @@ pub extern "C" fn _start() {
         }
 
         match RecvEnum::from_recv_bytes(&mut recv_box) {
+            Some(RecvEnum::PidEnable(enabled)) => {
+                pid_enabled = enabled.enabled;
+
+                let mut tune_resp = SendCtx::<PidTuneResp>::new(&mut send_box).unwrap();
+                tune_resp.pid_pitch_p = pid_pitch.pid_pitch_p;
+                tune_resp.pid_pitch_d = pid_pitch.pid_pitch_d;
+                tune_resp.pid_speed_p = pid_speed.pid_speed_p;
+                tune_resp.pid_speed_i = pid_speed.pid_speed_i;
+                ker_reply(sender_tid, &send_box).unwrap();
+            },
             Some(RecvEnum::PidTuneReq(tune)) => {
                 let key = str::from_utf8(&tune.key).unwrap();
                 match key {
@@ -177,6 +188,18 @@ pub extern "C" fn _start() {
                     "pitch_d" => {
                         pid_pitch.pid_pitch_d = tune.val;
                     },
+                    "speed_p" => {
+                        pid_speed.pid_speed_p = tune.val;
+                    },
+                    "speed_i" => {
+                        pid_speed.pid_speed_i = tune.val;
+                    },
+                    "pitch_t" => {
+                        pid_pitch.t_pitch = tune.val;
+                    },
+                    "t_speed" => {
+                        pid_speed.t_speed = tune.val;
+                    }
                     _ => (),
                 };
                 

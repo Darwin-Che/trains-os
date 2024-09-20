@@ -6,9 +6,9 @@ pub use crate::api::clock::TICK_MS;
 
 use heapless::String;
 
-// PID_DT = 20 ms
-pub const PID_DT_S: f64 = 0.01;
-pub const PID_DT_MS: u64 = 10;
+// PID_DT = 5 ms
+pub const PID_DT_S: f64 = 0.005;
+pub const PID_DT_MS: u64 = 5;
 
 #[repr(C)]
 #[derive(Debug, Default, MsgTrait)]
@@ -29,4 +29,10 @@ pub struct PidTuneResp {
     pub pid_pitch_d: f64,
     pub pid_speed_p: f64,
     pub pid_speed_i: f64,
+}
+
+#[repr(C)]
+#[derive(Debug, Default, MsgTrait)]
+pub struct PidEnable {
+    pub enabled: bool,
 }

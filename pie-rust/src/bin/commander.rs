@@ -138,14 +138,23 @@ fn cmd_execute_pwm(velo: f64) {
 }
 
 fn cmd_execute_pid(cmd: &str) {
-    let mut args = cmd.split(' ');
-    let key = args.next().unwrap();
-    let val = args.next().unwrap().parse::<f64>().unwrap();
-
     let mut send_box: SendBox = SendBox::default();
     let mut recv_box: RecvBox = RecvBox::default();
 
     let pid_tid = ns_get("pid").unwrap();
+
+    let mut args = cmd.split(' ');
+    let key = args.next().unwrap();
+
+    if key == "enable" || key == "disable" {
+        let mut pid_enable = SendCtx::<PidEnable>::new(&mut send_box).unwrap();
+        pid_enable.enabled = key == "enable";
+        ker_send(pid_tid, &send_box, &mut recv_box).unwrap();
+        return;
+    }
+
+    let val = args.next().unwrap().parse::<f64>().unwrap_or(0.0);
+
     let mut pid_tune = SendCtx::<PidTuneReq>::new(&mut send_box).unwrap();
     pid_tune.key = pid_tune.attach_array(key.len()).unwrap();
     pid_tune.key.copy_from_slice(key.as_bytes());
